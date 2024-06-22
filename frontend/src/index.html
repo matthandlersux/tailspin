@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Log Viewer</title>
+  <script>
+    window.addEventListener('error', e => {
+        if(e.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+            e.message === 'ResizeObserver loop limit exceeded') {
+            e.stopImmediatePropagation();
+        }
+    })
+  </script>
 </head>
 <body>
   <div id="app"></div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Line } from './Line';
+import { VList } from 'virtua';
 
 const Wrapper = styled.div`
   position: absolute;
@@ -24,11 +25,11 @@ type Props = { messages: string[] };
 export const Messages = (props: Props) => {
   return (
     <Wrapper>
-      <Inner>
+      <VList style={{ height: '100vh' }}>
         {props.messages.map((line, index) => (
           <Line key={index} line={line} />
         ))}
-      </Inner>
+      </VList>
     </Wrapper>
   );
 };
