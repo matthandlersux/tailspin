@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ isEven: boolean }>`
   font-family: monospace;
-
-  &:nth-child(even) {
-    background-color: #ffffff08;
-  }
+  ${props => props.isEven && 'background-color: #ffffff08;'}
 `;
 
 const ExpandJsonButton = styled.button`
@@ -18,13 +15,13 @@ const ExpandJsonButton = styled.button`
   margin: 0px 5px;
 `;
 
-export const Line = (props: { line: string }) => {
+export const Line = (props: { line: string; index: number }) => {
   const maybeJson = props.line.startsWith('{') ? JSON.parse(props.line) : undefined;
   const [showJson, toggleShowJson] = useState(false);
   const text = showJson && maybeJson ? JSON.stringify(maybeJson, null, 4) : props.line;
 
   return (
-    <Wrapper>
+    <Wrapper isEven={props.index % 2 == 0}>
       {maybeJson && (
         <ExpandJsonButton onClick={() => toggleShowJson(!showJson)}>+</ExpandJsonButton>
       )}
