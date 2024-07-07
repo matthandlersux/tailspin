@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Line } from './Line';
 import { VList, VListHandle } from 'virtua';
+import { LogEntry } from '../reducers/logDataSlice';
 
 const Wrapper = styled.div`
   position: absolute;
@@ -14,15 +15,17 @@ const Wrapper = styled.div`
   background-color: #000a1a;
   color: #fafcdf;
   font-size: 1rem;
+  font-family: monospace;
 `;
 
 const SubpixelRenderingZeroEquivalent = -1.5;
 
-type Props = { messages: string[] };
+type Props = { messages: (string | LogEntry)[]; nameMapping: Record<string, string> };
 
 export const Messages = (props: Props) => {
   const ref = useRef<VListHandle>(null);
   const shouldStickToBottom = useRef(true);
+
   useEffect(() => {
     if (!ref.current) return;
     if (!shouldStickToBottom.current) return;
@@ -44,7 +47,7 @@ export const Messages = (props: Props) => {
         }}
       >
         {props.messages.map((line, index) => (
-          <Line key={index} index={index} line={line} />
+          <Line key={index} index={index} line={line} nameMapping={props.nameMapping} />
         ))}
       </VList>
     </Wrapper>

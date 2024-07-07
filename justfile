@@ -22,3 +22,6 @@ typecheck-ts:
 # yarn in the frontend
 yarn *args="":
 	cd frontend && yarn {{ args }}
+
+test *args="":
+	just yarn jest {{ args }}

@@ -23,15 +23,25 @@ const Button = styled.button<{ selected: boolean }>`
 `;
 
 type Props = {
+  simplifyNames?: boolean;
   tabs: string[];
-  selected: number;
-  onSelect: (i: number) => void;
+  selected: 'combined' | number;
+  onSelect: (i: 'combined' | number) => void;
+  nameMapping: Record<string, string>;
 };
 
 export const TabView = (props: Props) => {
+  const tabNames = props.simplifyNames
+    ? props.tabs.map(name => props.nameMapping[name])
+    : props.tabs;
   return (
     <Wrapper>
-      {props.tabs.map((name, i) => (
+      {props.tabs.length > 1 && (
+        <Button onClick={() => props.onSelect('combined')} selected={props.selected === 'combined'}>
+          Combined
+        </Button>
+      )}
+      {tabNames.map((name, i) => (
         <Button onClick={() => props.onSelect(i)} selected={i === props.selected}>
           file: {name}
         </Button>

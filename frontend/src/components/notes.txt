@@ -1,0 +1,5 @@
+* search
+  * slowroll it 
+  * highlight inline
+* combined view
+  * attempt to find and fix timestampery
