@@ -25,3 +25,6 @@ yarn *args="":
 
 test *args="":
 	just yarn jest {{ args }}
+
+build-frontend:
+	cd frontend && yarn webpack --mode production
