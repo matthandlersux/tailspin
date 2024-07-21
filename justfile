@@ -1,3 +1,11 @@
+usage:
+	just --list
+
+# run this first to install dependencies
+setup:
+	just yarn
+	cargo build
+
 # run the backend with dev frontend
 run *args="":
 	#!/usr/bin/env bash
@@ -40,3 +48,4 @@ test *args="":
 
 build-frontend:
 	cd frontend && yarn webpack --mode production
+

@@ -3,11 +3,12 @@ import { Matcher } from './splitter';
 export const matchers: Matcher[] = [
   {
     type: 'quoted_string',
-    matcher: /"[^\"]+"/,
+    matcher: /(("")|(".*[^\\]"))/,
   },
   {
+    // avoid decimals?
     type: 'timestamp',
-    matcher: /\d{8,20}/,
+    matcher: /(?<!\d+\.)\d{8,20}/,
   },
   {
     type: 'level',
