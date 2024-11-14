@@ -3,7 +3,7 @@ import { Matcher } from './splitter';
 export const matchers: Matcher[] = [
   {
     type: 'quoted_string',
-    matcher: /(("")|(".*[^\\]"))/,
+    matcher: /(("")|(".*?[^\\]"))/,
   },
   {
     // avoid decimals?

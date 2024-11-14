@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -eux
+
+SCRIPT_DIR=$(dirname "$(realpath "$BASH_SOURCE")")
+CURRENT_ARGS="$@"
+
+eval "$SCRIPT_DIR/../target/debug/tailspin $CURRENT_ARGS" &
+BACKEND_PID=$!
+xdg-open "http://tailspin-logview.s3-website-us-west-2.amazonaws.com/"
+wait $BACKEND_PID
