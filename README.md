@@ -14,17 +14,27 @@ don't work for local logs.
 
 ![screenshot](./screenshot.png)
 
-## Installation
+## Quickstart
 
-currently you have to clone the repo, and build things locally. helpful commands located in a
-[justfile](https://github.com/casey/just).
+* `git checkout git@github.com:matthandlersux/tailspin.git`
+* `cd tailspin && cargo build`
+* `./bin/tailspin-prod path/to/logfile1.log path/to/logfile2.log`
 
-for convenience, the latest version of the web GUI is published here:
-http://tailspin-logview.s3-website-us-west-2.amazonaws.com/ ...but you can run it locally and/or
-hack together your own viewer.
+## Installation and Usage
 
-## todo
+currently you have to clone the repo and build things locally. helpful commands
+located in a[justfile](https://github.com/casey/just).
 
-- add search/filter
-- retain expanded json memory
-- add expand all json button
+for convenience, the latest version of the web app is published here:
+http://tailspin-logview.s3-website-us-west-2.amazonaws.com/ ...but you can run
+it locally and/or hack together your own viewer. the webapp automatically
+attempts to open a websocket connection to `localhost:8088/ws` and if it
+connects, it starts loading. so after you run the binary, your options are:
+* use the published webapp
+* use a locally running webapp (that you can fork/hack on)
+* rewrite a frontend
+
+additionally, you can add `$THIS_FOLDER/bin` to your path and run
+`tailspin-prod` which will run the binary (assuming it's been built already)
+and open the most recently published version of the webapp.
+
