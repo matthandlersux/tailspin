@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
@@ -9,6 +9,20 @@ const Wrapper = styled.div`
 const String = styled.span`
   margin-left: 10px;
   color: lime;
+`;
+
+const MultiLineString = styled.span`
+  margin-left: 10px;
+  color: lime;
+`;
+
+const MultiSingleLine = styled.span`
+  display: inline-block;
+  word-break: break-word;
+  margin-left: 15px;
+  white-space: pre-wrap;
+  text-indent: -20px;
+  padding-left: 20px;
 `;
 
 const Number = styled.span`
@@ -67,7 +81,24 @@ type Props = {
 
 const JSONValue = ({ json, hasComma }: Props) => {
   if (typeof json == 'string') {
-    return <String>"{json}"</String>;
+    if (json.includes('\n')) {
+      return (
+        <MultiLineString>
+          "
+          {json.split('\n').map(line => {
+            return (
+              <Fragment>
+                <br />
+                <MultiSingleLine>{line}</MultiSingleLine>
+              </Fragment>
+            );
+          })}
+          <br />"
+        </MultiLineString>
+      );
+    } else {
+      return <String>"{json}"</String>;
+    }
   } else if (typeof json == 'number') {
     return <Number>{json}</Number>;
   } else if (typeof json == 'boolean') {
