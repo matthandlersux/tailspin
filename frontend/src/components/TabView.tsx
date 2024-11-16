@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import styled from 'styled-components';
+import { indexToColor } from '../utils/colorHash';
+import { Circle } from './circle';
 
-const Wrapper = styled.div`
+export const Wrapper = styled.div`
   position: fixed;
   bottom: 0;
   left: 0;
@@ -20,6 +22,14 @@ const Button = styled.button<{ selected: boolean }>`
   border: 1px solid #666;
   padding: 5px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+
+  &:hover {
+    border-color: #222;
+    color: white;
+    background-color: black;
+  }
 `;
 
 type Props = {
@@ -31,11 +41,19 @@ type Props = {
 };
 
 export const TabView = (props: Props) => {
+  return (
+    <Wrapper>
+      <InnerView {...props} />
+    </Wrapper>
+  );
+};
+
+export const InnerView = (props: Props) => {
   const tabNames = props.simplifyNames
     ? props.tabs.map(name => props.nameMapping[name])
     : props.tabs;
   return (
-    <Wrapper>
+    <Fragment>
       {props.tabs.length > 1 && (
         <Button onClick={() => props.onSelect('combined')} selected={props.selected === 'combined'}>
           Combined
@@ -43,9 +61,10 @@ export const TabView = (props: Props) => {
       )}
       {tabNames.map((name, i) => (
         <Button onClick={() => props.onSelect(i)} selected={i === props.selected}>
-          file: {name}
+          <Circle color={indexToColor(i)} />
+          {name}
         </Button>
       ))}
-    </Wrapper>
+    </Fragment>
   );
 };

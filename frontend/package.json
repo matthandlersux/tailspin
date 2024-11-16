@@ -33,5 +33,10 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4",
     "websocket": "^1.0.35"
+  },
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+    "babel-plugin-styled-components": "^2.1.4",
+    "react-refresh": "^0.14.2"
   }
 }

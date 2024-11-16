@@ -35,11 +35,15 @@ const App = () => {
     view.currentIndex === 'combined' ? combinedLogs : logs[view.files[view.currentIndex]];
 
   if (isStorybook) {
-    return <Storybook />;
+    return (
+      <Wrapper>
+        <Storybook />
+      </Wrapper>
+    );
   } else if (logData) {
     return (
       <Wrapper>
-        <Messages messages={logData} nameMapping={nameMapping} />
+        <Messages messages={logData} nameMapping={nameMapping} fileOrdering={view.files} />
         <TabView
           simplifyNames
           onSelect={i => {

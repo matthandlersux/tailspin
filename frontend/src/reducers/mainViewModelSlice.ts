@@ -26,7 +26,7 @@ export const logDataSlice = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(addLine, (state, { payload: { data } }: PayloadAction<ServerData>) => {
-      state.files = uniq([...state.files, data.file_path]);
+      state.files = uniq([...state.files, data.file_path]).sort();
       const prefix = findCommonPrefix(state.files);
       state.nameMapping = Object.fromEntries(state.files.map(f => [f, f.slice(prefix.length)]));
     });

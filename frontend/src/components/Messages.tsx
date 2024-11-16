@@ -4,7 +4,7 @@ import { Line } from './Line';
 import { VList, VListHandle } from 'virtua';
 import { LogEntry } from '../reducers/logDataSlice';
 
-const Wrapper = styled.div`
+export const Wrapper = styled.div`
   position: absolute;
   top: 0;
   bottom: 50px;
@@ -20,9 +20,21 @@ const Wrapper = styled.div`
 
 const SubpixelRenderingZeroEquivalent = -1.5;
 
-type Props = { messages: (string | LogEntry)[]; nameMapping: Record<string, string> };
+type Props = {
+  messages: (string | LogEntry)[];
+  nameMapping: Record<string, string>;
+  fileOrdering: string[];
+};
 
 export const Messages = (props: Props) => {
+  return (
+    <Wrapper>
+      <InnerMessages {...props} />
+    </Wrapper>
+  );
+};
+
+export const InnerMessages = (props: Props) => {
   const ref = useRef<VListHandle>(null);
   const shouldStickToBottom = useRef(true);
 
@@ -35,21 +47,25 @@ export const Messages = (props: Props) => {
   }, [props.messages.length]);
 
   return (
-    <Wrapper>
-      <VList
-        ref={ref}
-        style={{ height: '100%' }}
-        onScroll={offset => {
-          if (!ref.current) return;
-          shouldStickToBottom.current =
-            offset - ref.current.scrollSize + ref.current.viewportSize >=
-            SubpixelRenderingZeroEquivalent;
-        }}
-      >
-        {props.messages.map((line, index) => (
-          <Line key={index} index={index} line={line} nameMapping={props.nameMapping} />
-        ))}
-      </VList>
-    </Wrapper>
+    <VList
+      ref={ref}
+      style={{ height: '100%' }}
+      onScroll={offset => {
+        if (!ref.current) return;
+        shouldStickToBottom.current =
+          offset - ref.current.scrollSize + ref.current.viewportSize >=
+          SubpixelRenderingZeroEquivalent;
+      }}
+    >
+      {props.messages.map((line, index) => (
+        <Line
+          key={index}
+          index={index}
+          line={line}
+          nameMapping={props.nameMapping}
+          fileOrdering={props.fileOrdering}
+        />
+      ))}
+    </VList>
   );
 };
