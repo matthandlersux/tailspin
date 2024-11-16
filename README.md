@@ -8,7 +8,7 @@ during development. It consists of:
 * Web GUI: a flexible interface for viewing and navigating log data over
   websockets
 
-Tailspin is ideal for local development environments with multiple services–-a
+Tailspin is ideal for local development environments with multiple services&mdash;a
 simpler alternative to crowded terminal outputs or 3rd party SaaS tools that
 don't work for local logs.
 
@@ -23,7 +23,7 @@ don't work for local logs.
 ## Installation and Usage
 
 currently you have to clone the repo and build things locally. helpful commands
-located in a[justfile](https://github.com/casey/just).
+located in a [justfile](https://github.com/casey/just).
 
 for convenience, the latest version of the web app is published here:
 http://tailspin-logview.s3-website-us-west-2.amazonaws.com/ ...but you can run
