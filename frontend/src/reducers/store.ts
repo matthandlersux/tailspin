@@ -1,13 +1,18 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import * as logDataSlice from './logDataSlice';
 import * as mainViewSlice from './mainViewModelSlice';
 
+const reducer = {
+  logData: logDataSlice.reducer,
+  mainView: mainViewSlice.reducer,
+};
+
 export const store = configureStore({
-  reducer: {
-    logData: logDataSlice.reducer,
-    mainView: mainViewSlice.reducer,
-  },
+  reducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(logDataSlice.debounceReflowMiddleware),
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+const rootReducer = combineReducers(reducer);
+export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;

@@ -10,5 +10,6 @@ export const findCommonPrefix = (strings: string[]): string => {
     },
     { running: '', done: false },
   );
-  return running;
+  const head = /^(.*\/).*$/.exec(running);
+  return head?.[1] ?? '';
 };

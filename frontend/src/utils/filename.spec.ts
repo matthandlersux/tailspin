@@ -19,4 +19,9 @@ describe('findCommonPrefix', () => {
   it('returns an empty string with an empty list', () => {
     expect(findCommonPrefix([])).toEqual('');
   });
+
+  it('stops at boundaries and does not clip off actual letters', () => {
+    const closeMatch = ['/path/to/thing1', '/path/to/that2'];
+    expect(findCommonPrefix(closeMatch)).toEqual('/path/to/');
+  });
 });
