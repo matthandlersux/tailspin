@@ -26,7 +26,7 @@ const String = styled.span`
   font-weight: bold;
 `;
 
-const Number = styled.span`
+const Timestamp = styled.span`
   color: white;
   font-weight: bolder;
 `;
@@ -35,7 +35,7 @@ export const Highlight = (props: { text: string }) => {
   const inner = splitByRegex(props.text, matchers).map(({ type, text }) => {
     if (type === 'timestamp') {
       // @ts-expect-error
-      return <Number title={new Date(+text)}>{text}</Number>;
+      return <Timestamp title={new Date(+text)}>{text}</Timestamp>;
     } else if (type === 'level') {
       return <LogData level={text.toLowerCase() as LogLevel}>{text}</LogData>;
     } else if (type === 'quoted_string') {

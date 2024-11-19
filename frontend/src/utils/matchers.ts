@@ -6,9 +6,8 @@ export const matchers: Matcher[] = [
     matcher: /(("")|(".*?[^\\]"))/,
   },
   {
-    // avoid decimals?
     type: 'timestamp',
-    matcher: /(?<!\d+\.)\d{8,20}/,
+    matcher: /\b(?<!\d+\.)\d{8,20}/,
   },
   {
     type: 'level',

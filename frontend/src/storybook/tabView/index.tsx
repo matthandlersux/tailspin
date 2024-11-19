@@ -35,13 +35,29 @@ export const TabViewSection = () => {
       <h2>TabView</h2>
       <div>
         <Entry title="0 tabs">
-          <RecomposedTabView nameMapping={{}} onSelect={noop} selected={0} tabs={[]} />
+          <RecomposedTabView
+            query={undefined}
+            onSearch={noop}
+            nameMapping={{}}
+            onSelect={noop}
+            selected={0}
+            tabs={[]}
+          />
         </Entry>
         <Entry title="1 tab">
-          <RecomposedTabView nameMapping={{}} onSelect={noop} selected={0} tabs={['file1.log']} />
+          <RecomposedTabView
+            query={undefined}
+            onSearch={noop}
+            nameMapping={{}}
+            onSelect={noop}
+            selected={0}
+            tabs={['file1.log']}
+          />
         </Entry>
         <Entry title="many tabs">
           <RecomposedTabView
+            query={undefined}
+            onSearch={noop}
             nameMapping={{}}
             onSelect={noop}
             selected={0}

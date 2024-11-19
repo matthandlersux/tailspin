@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './reducers/store';
-import { addLine } from './reducers/sharedActions';
+import { addLine, search } from './reducers/sharedActions';
 import { TabView } from './components/TabView';
 import { changeIndex } from './reducers/mainViewModelSlice';
 import styled from 'styled-components';
@@ -16,8 +16,7 @@ const Wrapper = styled.div`
 const App = () => {
   const dispatch = useDispatch();
   const nameMapping = useSelector((state: RootState) => state.mainView.nameMapping);
-  const combinedLogs = useSelector((state: RootState) => state.logData.all);
-  const logs = useSelector((state: RootState) => state.logData.files);
+  const log = useSelector((state: RootState) => state.logData);
   const view = useSelector((state: RootState) => state.mainView);
 
   useEffect(() => {
@@ -31,8 +30,11 @@ const App = () => {
   }, [dispatch]);
 
   const isStorybook = window.location.href.endsWith('/storybook');
-  const logData =
-    view.currentIndex === 'combined' ? combinedLogs : logs[view.files[view.currentIndex]];
+  const logData = view.searchQuery
+    ? log.searchBuffer
+    : view.currentIndex === 'combined'
+      ? log.all
+      : log.files[view.files[view.currentIndex]];
 
   if (isStorybook) {
     return (
@@ -45,11 +47,10 @@ const App = () => {
       <Wrapper>
         <Messages messages={logData} nameMapping={nameMapping} fileOrdering={view.files} />
         <TabView
+          query={view.searchQuery}
           simplifyNames
-          onSelect={i => {
-            console.log(combinedLogs);
-            dispatch(changeIndex(i));
-          }}
+          onSearch={q => dispatch(search(q))}
+          onSelect={i => dispatch(changeIndex(i))}
           selected={view.currentIndex}
           tabs={view.files}
           nameMapping={nameMapping}

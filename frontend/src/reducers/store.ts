@@ -10,7 +10,11 @@ const reducer = {
 export const store = configureStore({
   reducer,
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(logDataSlice.debounceReflowMiddleware),
+    getDefaultMiddleware().concat([
+      logDataSlice.debounceReflowMiddleware,
+      logDataSlice.debounceSearchMiddleware,
+    ]),
+  devTools: true,
 });
 
 const rootReducer = combineReducers(reducer);

@@ -9,3 +9,4 @@ export type ServerData = {
 };
 
 export const addLine = createAction<ServerData>('websocket/addLine');
+export const search = createAction<string>('focusBuffer/search');

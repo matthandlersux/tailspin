@@ -1,7 +1,8 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 import styled from 'styled-components';
 import { indexToColor } from '../utils/colorHash';
 import { Circle } from './circle';
+import { Search } from './search';
 
 export const Wrapper = styled.div`
   position: fixed;
@@ -15,20 +16,51 @@ export const Wrapper = styled.div`
   align-items: center;
 `;
 
-const Button = styled.button<{ selected: boolean }>`
-  font-weight: ${props => (props.selected ? 'bolder' : 'light')};
-  border-radius: 5px;
-  background-color: white;
-  border: 1px solid #666;
-  padding: 5px;
-  cursor: pointer;
-  display: inline-flex;
+const Option = styled.div<{ isSelected: boolean }>`
+  padding: 10px;
+  display: flex;
   align-items: center;
+  cursor: pointer;
+  background-color: white;
+  font-family: sans;
+  ${({ isSelected }) => {
+    return isSelected
+      ? `
+        display: block !important;
+        font-weight: bolder;
+        text-decoration: underline;
+      `
+      : '';
+  }}
+
+  ${Circle} {
+    margin-right: 10px;
+  }
 
   &:hover {
-    border-color: #222;
-    color: white;
-    background-color: black;
+    background: #f0f0f0;
+  }
+`;
+
+const Select = styled.div<{ isExpanded: boolean }>`
+  min-width: 200px;
+  border: 0px;
+  padding: 4px 8px;
+  margin: 0px;
+  position: absolute;
+  bottom: 0;
+  left: 0px;
+
+  ${Option} {
+    ${({ isExpanded }) => {
+      return isExpanded ? `display: block;` : `display: none;`;
+    }}
+  }
+
+  &:hover {
+    ${Option} {
+      display: block;
+    }
   }
 `;
 
@@ -38,12 +70,15 @@ type Props = {
   selected: 'combined' | number;
   onSelect: (i: 'combined' | number) => void;
   nameMapping: Record<string, string>;
+  query: string | undefined;
+  onSearch: (s: string) => void;
 };
 
 export const TabView = (props: Props) => {
   return (
     <Wrapper>
       <InnerView {...props} />
+      <Search query={props.query} onSearch={props.onSearch} />
     </Wrapper>
   );
 };
@@ -52,19 +87,36 @@ export const InnerView = (props: Props) => {
   const tabNames = props.simplifyNames
     ? props.tabs.map(name => props.nameMapping[name])
     : props.tabs;
+  const [isExpanded, setIsExpanded] = useState(false);
   return (
     <Fragment>
-      {props.tabs.length > 1 && (
-        <Button onClick={() => props.onSelect('combined')} selected={props.selected === 'combined'}>
-          Combined
-        </Button>
-      )}
-      {tabNames.map((name, i) => (
-        <Button onClick={() => props.onSelect(i)} selected={i === props.selected}>
-          <Circle color={indexToColor(i)} />
-          {name}
-        </Button>
-      ))}
+      <Select
+        isExpanded={isExpanded}
+        onClick={() => setIsExpanded(!isExpanded)}
+        onMouseLeave={() => setIsExpanded(false)}
+      >
+        {props.tabs.length > 1 && (
+          <Option
+            onClick={() => props.onSelect('combined')}
+            isSelected={props.selected === 'combined'}
+          >
+            <Circle color="black" />
+            Combined
+          </Option>
+        )}
+        {tabNames.map((name, i) => (
+          <Option
+            onClick={() => {
+              props.onSelect(i);
+              setIsExpanded(false);
+            }}
+            isSelected={props.selected === i}
+          >
+            <Circle color={indexToColor(i)} />
+            {name}
+          </Option>
+        ))}
+      </Select>
     </Fragment>
   );
 };
