@@ -5,6 +5,8 @@ import { RootState } from './store';
 
 const REFLOW_TIMEOUT = 200;
 const SEARCH_REFLOW_TIMEOUT = 5;
+const SEARCH_FAKE_ASYNC_LENGTH = 500;
+
 let buffer: LogEntry[] = [];
 let debounceHandle: NodeJS.Timeout | undefined;
 let searchDebounceHandle: NodeJS.Timeout | undefined;
@@ -78,12 +80,14 @@ export const debounceSearchMiddleware: Middleware<{}, RootState> = store => next
         store.dispatch(logDataSlice.actions.clearSearch());
         let startIndex = 0;
         searchInterval = setInterval(() => {
-          const sliced = store.getState().logData.all.slice(startIndex, startIndex + 100);
+          const sliced = store
+            .getState()
+            .logData.all.slice(startIndex, startIndex + SEARCH_FAKE_ASYNC_LENGTH);
           if (sliced.length) {
             const found = sliced.filter(entry => {
               return entry.line.includes(action.payload);
             });
-            startIndex += 100;
+            startIndex += SEARCH_FAKE_ASYNC_LENGTH;
             store.dispatch(logDataSlice.actions.reflowSearchBuffer(found));
           } else {
             clearInterval(searchInterval);

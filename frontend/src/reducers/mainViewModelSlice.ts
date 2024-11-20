@@ -39,7 +39,7 @@ export const logDataSlice = createSlice({
         state.files = fileNames.map(f => ({ name: f, lines: existingMap[f]?.lines ?? 1 }));
       } else {
         state.files = state.files.map(f => {
-          return { ...f, lines: f.lines + 1 };
+          return { ...f, lines: f.name === data.file_path ? f.lines + 1 : f.lines };
         });
       }
 
