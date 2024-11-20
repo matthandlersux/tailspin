@@ -51,7 +51,7 @@ export const TabViewSection = () => {
             nameMapping={{}}
             onSelect={noop}
             selected={0}
-            tabs={['file1.log']}
+            tabs={[{ name: 'file1.log', lines: 100 }]}
           />
         </Entry>
         <Entry title="many tabs">
@@ -61,7 +61,11 @@ export const TabViewSection = () => {
             nameMapping={{}}
             onSelect={noop}
             selected={0}
-            tabs={['svc-activity.log', 'svc-hypes.log', 'svc-thing.log']}
+            tabs={[
+              { name: 'svc-activity.log', lines: 100 },
+              { name: 'svc-hypes.log', lines: 100 },
+              { name: 'svc-thing.log', lines: 100 },
+            ]}
           />
         </Entry>
       </div>

@@ -18,6 +18,7 @@ const App = () => {
   const nameMapping = useSelector((state: RootState) => state.mainView.nameMapping);
   const log = useSelector((state: RootState) => state.logData);
   const view = useSelector((state: RootState) => state.mainView);
+  const fileNames = view.files.map(f => f.name);
 
   useEffect(() => {
     const ws = new WebSocket('ws://127.0.0.1:8088/ws');
@@ -34,7 +35,7 @@ const App = () => {
     ? log.searchBuffer
     : view.currentIndex === 'combined'
       ? log.all
-      : log.files[view.files[view.currentIndex]];
+      : log.files[view.files[view.currentIndex]?.name] ?? [];
 
   if (isStorybook) {
     return (
@@ -45,7 +46,11 @@ const App = () => {
   } else if (logData) {
     return (
       <Wrapper>
-        <Messages messages={logData} nameMapping={nameMapping} fileOrdering={view.files} />
+        <Messages
+          messages={logData}
+          nameMapping={nameMapping}
+          fileOrdering={fileNames}
+        />
         <TabView
           query={view.searchQuery}
           simplifyNames

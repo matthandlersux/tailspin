@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { indexToColor } from '../utils/colorHash';
 import { Circle } from './circle';
 import { Search } from './search';
+import { FileData } from '../reducers/mainViewModelSlice';
 
 export const Wrapper = styled.div`
   position: fixed;
@@ -20,15 +21,18 @@ const Option = styled.div<{ isSelected: boolean }>`
   padding: 10px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   cursor: pointer;
   background-color: white;
   font-family: sans;
   ${({ isSelected }) => {
     return isSelected
       ? `
-        display: block !important;
+        display: flex !important;
         font-weight: bolder;
-        text-decoration: underline;
+        ${Name} {
+          text-decoration: underline;
+        }
       `
       : '';
   }}
@@ -53,20 +57,30 @@ const Select = styled.div<{ isExpanded: boolean }>`
 
   ${Option} {
     ${({ isExpanded }) => {
-      return isExpanded ? `display: block;` : `display: none;`;
+      return isExpanded ? `display: flex;` : `display: none;`;
     }}
   }
 
   &:hover {
     ${Option} {
-      display: block;
+      display: flex;
     }
   }
 `;
 
+const Name = styled.span`
+  flex-grow: 1;
+`;
+
+const LineCount = styled.span`
+  padding-left: 10px;
+  display: inline-block;
+  font-family: mono;
+`;
+
 type Props = {
   simplifyNames?: boolean;
-  tabs: string[];
+  tabs: FileData[];
   selected: 'combined' | number;
   onSelect: (i: 'combined' | number) => void;
   nameMapping: Record<string, string>;
@@ -85,7 +99,7 @@ export const TabView = (props: Props) => {
 
 export const InnerView = (props: Props) => {
   const tabNames = props.simplifyNames
-    ? props.tabs.map(name => props.nameMapping[name])
+    ? props.tabs.map(f => ({ name: props.nameMapping[f.name], lines: f.lines }))
     : props.tabs;
   const [isExpanded, setIsExpanded] = useState(false);
   return (
@@ -101,10 +115,10 @@ export const InnerView = (props: Props) => {
             isSelected={props.selected === 'combined'}
           >
             <Circle color="black" />
-            Combined
+            <Name>Combined</Name>
           </Option>
         )}
-        {tabNames.map((name, i) => (
+        {tabNames.map(({ name, lines }, i) => (
           <Option
             onClick={() => {
               props.onSelect(i);
@@ -113,7 +127,8 @@ export const InnerView = (props: Props) => {
             isSelected={props.selected === i}
           >
             <Circle color={indexToColor(i)} />
-            {name}
+            <Name>{name}</Name>
+            <LineCount>{lines}</LineCount>
           </Option>
         ))}
       </Select>
