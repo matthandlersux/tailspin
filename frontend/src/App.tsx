@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './reducers/store';
 import { addLine, search } from './reducers/sharedActions';
 import { TabView } from './components/TabView';
-import { changeIndex } from './reducers/mainViewModelSlice';
+import { changeIndex, toggleJson } from './reducers/mainViewModelSlice';
 import styled from 'styled-components';
 import { Messages } from './components/Messages';
 import { Storybook } from './storybook';
@@ -31,11 +31,14 @@ const App = () => {
   }, [dispatch]);
 
   const isStorybook = window.location.href.endsWith('/storybook');
-  const logData = view.searchQuery
-    ? log.searchBuffer
+  const { currentFile, logData } = view.searchQuery
+    ? { currentFile: 'search', logData: log.searchBuffer }
     : view.currentIndex === 'combined'
-      ? log.all
-      : log.files[view.files[view.currentIndex]?.name] ?? [];
+      ? { currentFile: 'combined', logData: log.all }
+      : {
+          currentFile: view.currentIndex,
+          logData: log.files[view.files[view.currentIndex]?.name],
+        };
 
   if (isStorybook) {
     return (
@@ -46,11 +49,17 @@ const App = () => {
   } else if (logData) {
     return (
       <Wrapper>
-        <Messages
-          messages={logData}
-          nameMapping={nameMapping}
-          fileOrdering={fileNames}
-        />
+        {logData.length && (
+          <Messages
+            messages={logData}
+            nameMapping={nameMapping}
+            fileOrdering={fileNames}
+            expandedJson={view.expandedJsonLines[currentFile] ?? {}}
+            onToggleJson={(line, isExpanded) => {
+              dispatch(toggleJson({ line, isExpanded }));
+            }}
+          />
+        )}
         <TabView
           query={view.searchQuery}
           simplifyNames

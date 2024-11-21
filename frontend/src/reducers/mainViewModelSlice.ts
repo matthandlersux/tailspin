@@ -9,11 +9,14 @@ export type FileData = {
   lines: number;
 };
 
+type FileNames = 'combined' | 'search' | string;
+
 export interface MainViewState {
   files: FileData[];
   currentIndex: 'combined' | number;
   nameMapping: Record<string, string>;
   searchQuery: string | undefined;
+  expandedJsonLines: Record<FileNames, Record<number, boolean>>;
 }
 
 const initialState: MainViewState = {
@@ -21,12 +24,25 @@ const initialState: MainViewState = {
   nameMapping: {},
   currentIndex: 0,
   searchQuery: undefined,
+  expandedJsonLines: {},
 };
 
 export const logDataSlice = createSlice({
   name: 'mainView',
   initialState,
   reducers: {
+    toggleJson: (state, { payload }: PayloadAction<{ line: number; isExpanded: boolean }>) => {
+      const currentFileView = state.searchQuery?.trim().length ? 'search' : state.currentIndex;
+      if (payload.isExpanded && !(currentFileView in state.expandedJsonLines)) {
+        state.expandedJsonLines[currentFileView] = { [payload.line]: true };
+      } else {
+        if (payload.isExpanded) {
+          state.expandedJsonLines[currentFileView][payload.line] = true;
+        } else {
+          state.expandedJsonLines[currentFileView][payload.line] = false;
+        }
+      }
+    },
     changeIndex: (state, { payload }: PayloadAction<'combined' | number>) => {
       state.currentIndex = payload;
     },
@@ -52,5 +68,5 @@ export const logDataSlice = createSlice({
   },
 });
 
-export const { changeIndex } = logDataSlice.actions;
+export const { changeIndex, toggleJson } = logDataSlice.actions;
 export const reducer = logDataSlice.reducer;

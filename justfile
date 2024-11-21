@@ -32,7 +32,7 @@ frontend:
 	cd frontend && yarn webpack serve --mode development --open
 
 storybook:
-	cd frontend && yarn webpack serve --mode development --open-target "http://localhost:9000/storybook"
+	cd frontend && yarn webpack serve --mode development --open-target "http://localhost:9090/storybook"
 
 # typecheck the frontend
 typecheck-ts:

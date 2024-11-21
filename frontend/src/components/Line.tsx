@@ -59,20 +59,26 @@ type Props = {
   index: number;
   nameMapping: Record<string, string>;
   fileOrdering: string[];
+  showJson: boolean;
+  onToggleJson: (isExpanded: boolean) => void;
 };
 
 export const Line = (props: Props) => {
   const header = typeof props.line === 'string' ? undefined : props.line.file;
   const line = typeof props.line === 'string' ? props.line : props.line.line;
   const maybeJson = line.startsWith('{') ? JSON.parse(line) : undefined;
-  const [showJson, toggleShowJson] = useState(false);
+  const showJson = props.showJson;
   const text = showJson && maybeJson ? JSON.stringify(maybeJson, null, 4) : line;
   const colorIndex = header !== undefined && props.fileOrdering.indexOf(header);
 
   return (
     <Wrapper isEven={props.index % 2 == 0}>
       {maybeJson ? (
-        <ExpandJsonButton onClick={() => toggleShowJson(!showJson)}>
+        <ExpandJsonButton
+          onClick={() => {
+            props.onToggleJson(!showJson);
+          }}
+        >
           {!showJson ? '▶' : '▼'}
         </ExpandJsonButton>
       ) : (

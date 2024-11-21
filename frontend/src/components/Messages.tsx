@@ -24,6 +24,8 @@ type Props = {
   messages: (string | LogEntry)[];
   nameMapping: Record<string, string>;
   fileOrdering: string[];
+  expandedJson: Record<number, boolean>;
+  onToggleJson: (line: number, isExpanded: boolean) => void;
 };
 
 export const Messages = (props: Props) => {
@@ -64,6 +66,8 @@ export const InnerMessages = (props: Props) => {
           line={line}
           nameMapping={props.nameMapping}
           fileOrdering={props.fileOrdering}
+          showJson={props.expandedJson[index]}
+          onToggleJson={toggle => props.onToggleJson(index, toggle)}
         />
       ))}
     </VList>

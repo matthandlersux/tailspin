@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Entry, SectionW } from '../utils';
 import { InnerMessages as Messages, Wrapper as MessagesWrapper } from '../../components/Messages';
+import { noop } from 'lodash';
 
 const OuterContainer = styled.div`
   position: relative;
@@ -40,13 +41,21 @@ export const MessagesSection = () => {
       <h2>Messages</h2>
       <div>
         <Entry title="multi line">
-          <RecomposedMessages messages={lines} nameMapping={{}} fileOrdering={[]} />
+          <RecomposedMessages
+            messages={lines}
+            nameMapping={{}}
+            fileOrdering={[]}
+            expandedJson={{}}
+            onToggleJson={noop}
+          />
         </Entry>
         <Entry title="multi line with services">
           <RecomposedMessages
             messages={lines.map(line => ({ file: 'file1.log', line }))}
             nameMapping={{ 'file1.log': 'file1' }}
             fileOrdering={['file1.log']}
+            expandedJson={{}}
+            onToggleJson={noop}
           />
         </Entry>
       </div>
