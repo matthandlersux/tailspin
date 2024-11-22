@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { InnerView as TabView, Wrapper as TabViewWrapper } from '../../components/TabView';
-
 import { Entry, SectionW } from '../utils';
 import { noop } from 'lodash';
 
@@ -36,7 +35,7 @@ export const TabViewSection = () => {
       <div>
         <Entry title="0 tabs">
           <RecomposedTabView
-            query={undefined}
+            query={''}
             onSearch={noop}
             nameMapping={{}}
             onSelect={noop}
@@ -46,7 +45,7 @@ export const TabViewSection = () => {
         </Entry>
         <Entry title="1 tab">
           <RecomposedTabView
-            query={undefined}
+            query={''}
             onSearch={noop}
             nameMapping={{}}
             onSelect={noop}
@@ -56,7 +55,7 @@ export const TabViewSection = () => {
         </Entry>
         <Entry title="many tabs">
           <RecomposedTabView
-            query={undefined}
+            query={''}
             onSearch={noop}
             nameMapping={{}}
             onSelect={noop}

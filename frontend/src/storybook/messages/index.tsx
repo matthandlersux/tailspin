@@ -42,6 +42,7 @@ export const MessagesSection = () => {
       <div>
         <Entry title="multi line">
           <RecomposedMessages
+            onSearch={noop}
             messages={lines}
             nameMapping={{}}
             fileOrdering={[]}
@@ -51,6 +52,7 @@ export const MessagesSection = () => {
         </Entry>
         <Entry title="multi line with services">
           <RecomposedMessages
+            onSearch={noop}
             messages={lines.map(line => ({ file: 'file1.log', line }))}
             nameMapping={{ 'file1.log': 'file1' }}
             fileOrdering={['file1.log']}

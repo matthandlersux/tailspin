@@ -84,7 +84,7 @@ type Props = {
   selected: 'combined' | number;
   onSelect: (i: 'combined' | number) => void;
   nameMapping: Record<string, string>;
-  query: string | undefined;
+  query: string;
   onSearch: (s: string) => void;
 };
 

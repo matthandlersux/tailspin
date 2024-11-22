@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { JSON as JSONComponent } from './JSON';
 import { Highlight } from './Highlight';
@@ -9,7 +9,8 @@ import { indexToColor } from '../utils/colorHash';
 const Wrapper = styled.div<{ isEven: boolean }>`
   ${props => props.isEven && 'background-color: #ffffff08;'}
   line-height: 1;
-  padding: 2px 0px;
+  padding: 2px 8px;
+  line-break: normal;
 
   &:hover {
     background-color: rgba(256, 256, 256, 0.1);

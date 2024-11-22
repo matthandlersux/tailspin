@@ -15,7 +15,7 @@ export interface MainViewState {
   files: FileData[];
   currentIndex: 'combined' | number;
   nameMapping: Record<string, string>;
-  searchQuery: string | undefined;
+  searchQuery: string;
   expandedJsonLines: Record<FileNames, Record<number, boolean>>;
 }
 
@@ -23,7 +23,7 @@ const initialState: MainViewState = {
   files: [],
   nameMapping: {},
   currentIndex: 0,
-  searchQuery: undefined,
+  searchQuery: '',
   expandedJsonLines: {},
 };
 
@@ -63,7 +63,7 @@ export const logDataSlice = createSlice({
       state.nameMapping = Object.fromEntries(fileNames.map(f => [f, f.slice(prefix.length)]));
     });
     builder.addCase(search, (state, { payload: query }: PayloadAction<string>) => {
-      query.trim().length ? (state.searchQuery = query) : (state.searchQuery = undefined);
+      query.trim().length ? (state.searchQuery = query) : (state.searchQuery = '');
     });
   },
 });

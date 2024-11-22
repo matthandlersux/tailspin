@@ -49,17 +49,16 @@ const App = () => {
   } else if (logData) {
     return (
       <Wrapper>
-        {logData.length && (
-          <Messages
-            messages={logData}
-            nameMapping={nameMapping}
-            fileOrdering={fileNames}
-            expandedJson={view.expandedJsonLines[currentFile] ?? {}}
-            onToggleJson={(line, isExpanded) => {
-              dispatch(toggleJson({ line, isExpanded }));
-            }}
-          />
-        )}
+        <Messages
+          messages={logData}
+          nameMapping={nameMapping}
+          fileOrdering={fileNames}
+          expandedJson={view.expandedJsonLines[currentFile] ?? {}}
+          onSearch={q => dispatch(search(q))}
+          onToggleJson={(line, isExpanded) => {
+            dispatch(toggleJson({ line, isExpanded }));
+          }}
+        />
         <TabView
           query={view.searchQuery}
           simplifyNames
