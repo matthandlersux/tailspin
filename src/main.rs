@@ -7,7 +7,10 @@ mod log;
 
 #[tokio::main]
 async fn main() {
-    let routes = websocket_route().with(warp::cors().allow_any_origin());
+    let static_files = warp::fs::dir("frontend/dist")
+        .or(warp::path::end().and(warp::fs::file("frontend/dist/index.html")));
+    let websocket = websocket_route().with(warp::cors().allow_any_origin());
+    let routes = websocket.or(static_files);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8088)).await;
 }
