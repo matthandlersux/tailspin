@@ -48,6 +48,7 @@ export const MessagesSection = () => {
             fileOrdering={[]}
             expandedJson={{}}
             onToggleJson={noop}
+            showAllJSON={false}
           />
         </Entry>
         <Entry title="multi line with services">
@@ -58,6 +59,7 @@ export const MessagesSection = () => {
             fileOrdering={['file1.log']}
             expandedJson={{}}
             onToggleJson={noop}
+            showAllJSON={false}
           />
         </Entry>
       </div>

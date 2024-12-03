@@ -17,6 +17,7 @@ export interface MainViewState {
   nameMapping: Record<string, string>;
   searchQuery: string;
   expandedJsonLines: Record<FileNames, Record<number, boolean>>;
+  expandAllJSON: boolean;
 }
 
 const initialState: MainViewState = {
@@ -25,12 +26,16 @@ const initialState: MainViewState = {
   currentIndex: 0,
   searchQuery: '',
   expandedJsonLines: {},
+  expandAllJSON: false,
 };
 
 export const logDataSlice = createSlice({
   name: 'mainView',
   initialState,
   reducers: {
+    toggleExpandAllJSON: state => {
+      state.expandAllJSON = !state.expandAllJSON;
+    },
     toggleJson: (state, { payload }: PayloadAction<{ line: number; isExpanded: boolean }>) => {
       const currentFileView = state.searchQuery?.trim().length ? 'search' : state.currentIndex;
       if (payload.isExpanded && !(currentFileView in state.expandedJsonLines)) {
@@ -68,5 +73,5 @@ export const logDataSlice = createSlice({
   },
 });
 
-export const { changeIndex, toggleJson } = logDataSlice.actions;
+export const { changeIndex, toggleJson, toggleExpandAllJSON } = logDataSlice.actions;
 export const reducer = logDataSlice.reducer;

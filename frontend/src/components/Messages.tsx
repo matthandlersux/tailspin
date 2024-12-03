@@ -47,6 +47,7 @@ type Props = {
   fileOrdering: string[];
   expandedJson: Record<number, boolean>;
   onToggleJson: (line: number, isExpanded: boolean) => void;
+  showAllJSON: boolean;
   onSearch: (q: string) => void;
 };
 
@@ -112,6 +113,7 @@ export const InnerMessages = (props: Props) => {
           fileOrdering={props.fileOrdering}
           showJson={props.expandedJson[index]}
           onToggleJson={toggle => props.onToggleJson(index, toggle)}
+          showAllJson={props.showAllJSON}
         />
       ))}
     </VList>

@@ -60,6 +60,7 @@ type Props = {
   index: number;
   nameMapping: Record<string, string>;
   fileOrdering: string[];
+  showAllJson: boolean;
   showJson: boolean;
   onToggleJson: (isExpanded: boolean) => void;
 };
@@ -68,7 +69,7 @@ export const Line = (props: Props) => {
   const header = typeof props.line === 'string' ? undefined : props.line.file;
   const line = typeof props.line === 'string' ? props.line : props.line.line;
   const maybeJson = line.startsWith('{') ? JSON.parse(line) : undefined;
-  const showJson = props.showJson;
+  const showJson = props.showAllJson || props.showJson;
   const text = showJson && maybeJson ? JSON.stringify(maybeJson, null, 4) : line;
   const colorIndex = header !== undefined && props.fileOrdering.indexOf(header);
 

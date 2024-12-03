@@ -13,7 +13,7 @@ export const Wrapper = styled.div`
   height: 50px;
   background-color: #ccc;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
 `;
 
@@ -51,9 +51,6 @@ const Select = styled.div<{ isExpanded: boolean }>`
   border: 0px;
   padding: 4px 8px;
   margin: 0px;
-  position: absolute;
-  bottom: 0;
-  left: 0px;
 
   ${Option} {
     ${({ isExpanded }) => {
@@ -78,6 +75,8 @@ const LineCount = styled.span`
   font-family: mono;
 `;
 
+const Checkbox = styled.input``;
+
 type Props = {
   simplifyNames?: boolean;
   tabs: FileData[];
@@ -86,12 +85,22 @@ type Props = {
   nameMapping: Record<string, string>;
   query: string;
   onSearch: (s: string) => void;
+  isAllJSONExpanded: boolean;
+  onToggleExpandAllJSON: () => void;
 };
 
 export const TabView = (props: Props) => {
   return (
     <Wrapper>
       <InnerView {...props} />
+      <div>
+        <Checkbox
+          type="checkbox"
+          onChange={() => props.onToggleExpandAllJSON()}
+          checked={props.isAllJSONExpanded}
+        />
+        <label>Expand all JSON</label>
+      </div>
       <Search query={props.query} onSearch={props.onSearch} />
     </Wrapper>
   );

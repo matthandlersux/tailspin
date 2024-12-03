@@ -2,13 +2,11 @@ import * as React from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
+  padding: 4px 8px;
   input {
     border: 0;
-    position: absolute;
-    right: 5px;
-    bottom: 5px;
-    top: 5px;
     padding: 4px 8px;
+    min-height: 30px;
     min-width: 400px;
   }
 

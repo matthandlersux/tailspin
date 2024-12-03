@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './reducers/store';
 import { addLine, search } from './reducers/sharedActions';
 import { TabView } from './components/TabView';
-import { changeIndex, toggleJson } from './reducers/mainViewModelSlice';
+import { changeIndex, toggleExpandAllJSON, toggleJson } from './reducers/mainViewModelSlice';
 import styled from 'styled-components';
 import { Messages } from './components/Messages';
 import { Storybook } from './storybook';
@@ -58,6 +58,7 @@ const App = () => {
           onToggleJson={(line, isExpanded) => {
             dispatch(toggleJson({ line, isExpanded }));
           }}
+          showAllJSON={view.expandAllJSON}
         />
         <TabView
           query={view.searchQuery}
@@ -67,6 +68,8 @@ const App = () => {
           selected={view.currentIndex}
           tabs={view.files}
           nameMapping={nameMapping}
+          isAllJSONExpanded={view.expandAllJSON}
+          onToggleExpandAllJSON={() => dispatch(toggleExpandAllJSON())}
         />
       </Wrapper>
     );

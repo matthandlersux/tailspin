@@ -41,6 +41,8 @@ export const TabViewSection = () => {
             onSelect={noop}
             selected={0}
             tabs={[]}
+            isAllJSONExpanded={false}
+            onToggleExpandAllJSON={noop}
           />
         </Entry>
         <Entry title="1 tab">
@@ -51,6 +53,8 @@ export const TabViewSection = () => {
             onSelect={noop}
             selected={0}
             tabs={[{ name: 'file1.log', lines: 100 }]}
+            isAllJSONExpanded={false}
+            onToggleExpandAllJSON={noop}
           />
         </Entry>
         <Entry title="many tabs">
@@ -65,6 +69,8 @@ export const TabViewSection = () => {
               { name: 'svc-hypes.log', lines: 100 },
               { name: 'svc-thing.log', lines: 100 },
             ]}
+            isAllJSONExpanded={false}
+            onToggleExpandAllJSON={noop}
           />
         </Entry>
       </div>
