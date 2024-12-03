@@ -13,7 +13,7 @@ export const Wrapper = styled.div`
   height: 50px;
   background-color: #ccc;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 `;
 
@@ -51,6 +51,9 @@ const Select = styled.div<{ isExpanded: boolean }>`
   border: 0px;
   padding: 4px 8px;
   margin: 0px;
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
 
   ${Option} {
     ${({ isExpanded }) => {
@@ -112,35 +115,33 @@ export const InnerView = (props: Props) => {
     : props.tabs;
   const [isExpanded, setIsExpanded] = useState(false);
   return (
-    <Fragment>
-      <Select
-        isExpanded={isExpanded}
-        onClick={() => setIsExpanded(!isExpanded)}
-        onMouseLeave={() => setIsExpanded(false)}
-      >
-        {props.tabs.length > 1 && (
-          <Option
-            onClick={() => props.onSelect('combined')}
-            isSelected={props.selected === 'combined'}
-          >
-            <Circle color="black" />
-            <Name>Combined</Name>
-          </Option>
-        )}
-        {tabNames.map(({ name, lines }, i) => (
-          <Option
-            onClick={() => {
-              props.onSelect(i);
-              setIsExpanded(false);
-            }}
-            isSelected={props.selected === i}
-          >
-            <Circle color={indexToColor(i)} />
-            <Name>{name}</Name>
-            <LineCount>{lines}</LineCount>
-          </Option>
-        ))}
-      </Select>
-    </Fragment>
+    <Select
+      isExpanded={isExpanded}
+      onClick={() => setIsExpanded(!isExpanded)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
+      {props.tabs.length > 1 && (
+        <Option
+          onClick={() => props.onSelect('combined')}
+          isSelected={props.selected === 'combined'}
+        >
+          <Circle color="black" />
+          <Name>Combined</Name>
+        </Option>
+      )}
+      {tabNames.map(({ name, lines }, i) => (
+        <Option
+          onClick={() => {
+            props.onSelect(i);
+            setIsExpanded(false);
+          }}
+          isSelected={props.selected === i}
+        >
+          <Circle color={indexToColor(i)} />
+          <Name>{name}</Name>
+          <LineCount>{lines}</LineCount>
+        </Option>
+      ))}
+    </Select>
   );
 };
