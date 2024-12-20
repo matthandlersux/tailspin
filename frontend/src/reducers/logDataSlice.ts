@@ -85,7 +85,7 @@ export const debounceSearchMiddleware: Middleware<{}, RootState> = store => next
             .logData.all.slice(startIndex, startIndex + SEARCH_FAKE_ASYNC_LENGTH);
           if (sliced.length) {
             const found = sliced.filter(entry => {
-              return entry.line.includes(action.payload);
+              return entry.line.match(new RegExp(action.payload, 'i'));
             });
             startIndex += SEARCH_FAKE_ASYNC_LENGTH;
             store.dispatch(logDataSlice.actions.reflowSearchBuffer(found));

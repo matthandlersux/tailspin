@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useRef, useState } from 'react';
+import styled, { css } from 'styled-components';
 import { Line } from './Line';
 import { VList, VListHandle } from 'virtua';
 import { LogEntry } from '../reducers/logDataSlice';
@@ -37,6 +37,35 @@ const FloatingBox = styled.div<{ top: number; left: number }>`
     background-color: transparent;
     cursor: pointer;
   }
+`;
+
+const DownButton = styled.div<{ isVisible: boolean }>`
+  color: black;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 30px;
+  font-size: 24px;
+  font-weight: bold;
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background-color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  ${({ isVisible }) =>
+    isVisible &&
+    css`
+      opacity: 0.8;
+    `}
 `;
 
 const SubpixelRenderingZeroEquivalent = -1.5;
@@ -84,6 +113,7 @@ export const Messages = (props: Props) => {
 export const InnerMessages = (props: Props) => {
   const ref = useRef<VListHandle>(null);
   const shouldStickToBottom = useRef(true);
+  const [showDownButton, setShowDownButton] = useState(false);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -93,29 +123,38 @@ export const InnerMessages = (props: Props) => {
     });
   }, [props.messages.length]);
 
+  const scrollToBottom = () => {
+    ref.current?.scrollToIndex(props.messages.length - 1);
+  };
+
   return (
-    <VList
-      ref={ref}
-      style={{ height: '100%' }}
-      onScroll={offset => {
-        if (!ref.current) return;
-        shouldStickToBottom.current =
-          offset - ref.current.scrollSize + ref.current.viewportSize >=
-          SubpixelRenderingZeroEquivalent;
-      }}
-    >
-      {props.messages.map((line, index) => (
-        <Line
-          key={index}
-          index={index}
-          line={line}
-          nameMapping={props.nameMapping}
-          fileOrdering={props.fileOrdering}
-          showJson={props.expandedJson[index]}
-          onToggleJson={toggle => props.onToggleJson(index, toggle)}
-          showAllJson={props.showAllJSON}
-        />
-      ))}
-    </VList>
+    <React.Fragment>
+      <VList
+        ref={ref}
+        style={{ height: '100%' }}
+        onScroll={offset => {
+          if (!ref.current) return;
+          const p = offset - ref.current.scrollSize + ref.current.viewportSize;
+          setShowDownButton(p <= SubpixelRenderingZeroEquivalent);
+          shouldStickToBottom.current = p >= SubpixelRenderingZeroEquivalent;
+        }}
+      >
+        {props.messages.map((line, index) => (
+          <Line
+            key={index}
+            index={index}
+            line={line}
+            nameMapping={props.nameMapping}
+            fileOrdering={props.fileOrdering}
+            showJson={props.expandedJson[index]}
+            onToggleJson={toggle => props.onToggleJson(index, toggle)}
+            showAllJson={props.showAllJSON}
+          />
+        ))}
+      </VList>
+      <DownButton isVisible={showDownButton} onClick={scrollToBottom}>
+        {'⌄'}
+      </DownButton>
+    </React.Fragment>
   );
 };
