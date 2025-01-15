@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
-  font-family: mono;
+  font-family: mono, monospace;
   font-weight: bold;
 `;
 

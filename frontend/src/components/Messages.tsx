@@ -15,7 +15,7 @@ export const Wrapper = styled.div`
   background-color: #000a1a;
   color: #fafcdf;
   font-size: 1rem;
-  font-family: monospace;
+  font-family: mono, monospace;
 `;
 
 const FloatingBox = styled.div<{ top: number; left: number }>`

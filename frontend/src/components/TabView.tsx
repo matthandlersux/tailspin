@@ -75,7 +75,7 @@ const Name = styled.span`
 const LineCount = styled.span`
   padding-left: 10px;
   display: inline-block;
-  font-family: mono;
+  font-family: mono, monospace;
 `;
 
 const Checkbox = styled.input``;
