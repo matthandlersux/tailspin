@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './reducers/store';
 import { addLine, search } from './reducers/sharedActions';
@@ -7,6 +7,7 @@ import { changeIndex, toggleExpandAllJSON, toggleJson } from './reducers/mainVie
 import styled from 'styled-components';
 import { Messages } from './components/Messages';
 import { Storybook } from './storybook';
+import { FileSwitcher } from './components/FileSwitcher';
 
 const Wrapper = styled.div`
   margin: 0;
@@ -19,6 +20,21 @@ const App = () => {
   const log = useSelector((state: RootState) => state.logData);
   const view = useSelector((state: RootState) => state.mainView);
   const fileNames = view.files.map(f => f.name);
+  const fileNamesWithIndexes: [string, number][] = fileNames.map((f, i) => [f, i]);
+
+  const [isSearchOpen, setSearchOpen] = useState(false);
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      if (query.trim() === '') return fileNamesWithIndexes;
+      else {
+        return fileNamesWithIndexes.filter(([file, i]) =>
+          file.toLowerCase().includes(query.toLowerCase()),
+        );
+      }
+    },
+    [fileNames],
+  );
 
   useEffect(() => {
     const ws = new WebSocket('ws://127.0.0.1:8088/ws');
@@ -71,6 +87,14 @@ const App = () => {
           isAllJSONExpanded={view.expandAllJSON}
           onToggleExpandAllJSON={() => dispatch(toggleExpandAllJSON())}
         />
+        <FileSwitcher
+          isOpen={isSearchOpen}
+          onTriggered={() => setSearchOpen(true)}
+          onClose={() => setSearchOpen(false)}
+          onSearch={handleSearch}
+          onSelect={i => dispatch(changeIndex(i))}
+        />
+        <div />
       </Wrapper>
     );
   } else {
