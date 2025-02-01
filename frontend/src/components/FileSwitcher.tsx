@@ -75,7 +75,6 @@ export const FileSwitcher = ({ isOpen, onTriggered, onClose, onSearch, onSelect 
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log(event);
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'T') {
         event.preventDefault();
         if (!isOpen) {
