@@ -152,9 +152,9 @@ const JSONValue = ({ json, hasComma, jsonKey }: Props & { jsonKey?: string }) =>
 };
 
 const JSONObject = (props: Props & { json: {} }) => {
-  const sortedEntries = sortBy(Object.entries(props.json), e => {
-    const i = sortPriorityFields.indexOf(e[0]);
-    return i === -1 ? e[0] : i;
+  const sortedEntries = sortBy(Object.entries(props.json), ([key]) => {
+    const index = sortPriorityFields.indexOf(key);
+    return [index === -1 ? Infinity : index, key];
   });
 
   return (
