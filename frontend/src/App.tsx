@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './reducers/store';
 import { addLine, search } from './reducers/sharedActions';
@@ -8,6 +8,7 @@ import styled from 'styled-components';
 import { Messages } from './components/Messages';
 import { Storybook } from './storybook';
 import { FileSwitcher } from './components/FileSwitcher';
+import { ConnectionLossOverlay } from './components/ConnectionLossOverlay';
 
 const Wrapper = styled.div`
   margin: 0;
@@ -23,6 +24,9 @@ const App = () => {
   const fileNamesWithIndexes: [string, number][] = fileNames.map((f, i) => [f, i]);
 
   const [isSearchOpen, setSearchOpen] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+  const [showConnectionLoss, setShowConnectionLoss] = useState(false);
+  const wsRef = useRef<WebSocket | undefined>(undefined);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -36,15 +40,48 @@ const App = () => {
     [fileNames],
   );
 
-  useEffect(() => {
+  const connectWebSocket = useCallback(() => {
     const ws = new WebSocket('ws://127.0.0.1:8088/ws');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setIsConnected(true);
+      setShowConnectionLoss(false);
+    };
+
     ws.onmessage = event => {
       const data = JSON.parse(event.data);
       dispatch(addLine(data));
     };
 
-    return () => ws.close();
+    ws.onclose = () => {
+      setIsConnected(false);
+      setShowConnectionLoss(true);
+    };
+
+    ws.onerror = () => {
+      setIsConnected(false);
+      setShowConnectionLoss(true);
+    };
+
+    return ws;
   }, [dispatch]);
+
+  useEffect(() => {
+    const ws = connectWebSocket();
+    return () => ws.close();
+  }, [connectWebSocket]);
+
+  const handleReconnect = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    connectWebSocket();
+  }, [connectWebSocket]);
+
+  const handleCloseTab = useCallback(() => {
+    window.close();
+  }, []);
 
   const isStorybook = window.location.href.endsWith('/storybook');
   const { currentFile, logData } = view.searchQuery
@@ -94,6 +131,12 @@ const App = () => {
           onSearch={handleSearch}
           onSelect={i => dispatch(changeIndex(i))}
         />
+        {showConnectionLoss && (
+          <ConnectionLossOverlay
+            onReconnect={handleReconnect}
+            onClose={handleCloseTab}
+          />
+        )}
         <div />
       </Wrapper>
     );

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { JSONSection } from './json';
 import { TabViewSection } from './tabView';
 import { MessagesSection } from './messages';
+import { ConnectionLossSection } from './connectionLoss';
 
 const Wrapper = styled.div`
   background-color: black;
@@ -23,6 +24,7 @@ export const Storybook = () => {
       <MessagesSection />
       <TabViewSection />
       <JSONSection />
+      <ConnectionLossSection />
     </Wrapper>
   );
 };
