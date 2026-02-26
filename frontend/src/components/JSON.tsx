@@ -77,11 +77,30 @@ const levelColors: Record<string, { background: string; text: string }> = {
   fatal: { background: '#8e44ad', text: '#fceff9' },
 };
 
+const numericLevels: Record<string, string> = {
+  10: 'trace',
+  20: 'debug',
+  30: 'info',
+  40: 'warn',
+  50: 'error',
+  60: 'fatal',
+};
+
+const defaultLevelColor = { background: '#444', text: '#ccc' };
+
+const resolveNumericLevel = (level: number): string =>
+  numericLevels[level.toString()] ?? level.toString();
+
+const resolveStringLevel = (level: string): string => level.toLowerCase();
+
+const getLevelColor = (level: string) =>
+  levelColors[level.toLowerCase()] ?? defaultLevelColor;
+
 export const LogLevel = styled.span<{ level: string }>`
   margin-left: 10px;
   padding: 2px 4px;
-  background-color: ${({ level }) => levelColors[level].background};
-  color: ${({ level }) => levelColors[level].text};
+  background-color: ${({ level }) => getLevelColor(level).background};
+  color: ${({ level }) => getLevelColor(level).text};
   font-weight: 500;
   border-radius: 0.25rem;
   text-transform: uppercase;
@@ -124,14 +143,18 @@ const JSONValue = ({ json, hasComma, jsonKey }: Props & { jsonKey?: string }) =>
         </MultiLineString>
       );
     } else if (jsonKey === 'level') {
-      return <LogLevel level={json}>{json}</LogLevel>;
+      const resolved = resolveStringLevel(json);
+      return <LogLevel level={resolved}>{resolved}</LogLevel>;
     } else if (jsonKey === 'time' || jsonKey === 'timestamp') {
       return <Timestamp timestamp={json} />;
     } else {
       return <String underline={underline}>"{json}"</String>;
     }
   } else if (typeof json == 'number') {
-    if (jsonKey === 'time' || jsonKey === 'timestamp') {
+    if (jsonKey === 'level') {
+      const resolved = resolveNumericLevel(json);
+      return <LogLevel level={resolved}>{resolved}</LogLevel>;
+    } else if (jsonKey === 'time' || jsonKey === 'timestamp') {
       return (
         <Number>
           <Timestamp timestamp={json} />

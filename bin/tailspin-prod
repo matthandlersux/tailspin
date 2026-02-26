@@ -9,6 +9,8 @@ CURRENT_ARGS="$@"
 eval "$SCRIPT_DIR/../target/debug/tailspin $CURRENT_ARGS" &
 BACKEND_PID=$!
 
+trap "kill $BACKEND_PID 2>/dev/null; wait $BACKEND_PID 2>/dev/null" INT TERM EXIT
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
   open "$PROD_URL"
 else
