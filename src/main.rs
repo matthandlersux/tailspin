@@ -12,7 +12,11 @@ async fn main() {
     let websocket = websocket_route().with(warp::cors().allow_any_origin());
     let routes = websocket.or(static_files);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 8088)).await;
+    let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], 8088), async {
+        tokio::signal::ctrl_c().await.ok();
+    });
+
+    server.await;
 }
 
 fn websocket_route() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {

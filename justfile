@@ -10,6 +10,10 @@ build:
 	cargo build
 	just build-frontend
 
+build-release:
+	cargo build --release
+	just build-frontend
+
 # run the backend with dev frontend
 run *args="":
 	#!/usr/bin/env bash
@@ -17,7 +21,13 @@ run *args="":
 	set -eux
 
 	just backend {{ args }} &
-	just frontend
+	BACKEND_PID=$!
+
+	trap "kill $BACKEND_PID 2>/dev/null; wait $BACKEND_PID 2>/dev/null" INT TERM EXIT
+
+	just frontend || true
+
+	wait $BACKEND_PID
 
 # open the published website for viewing
 open-prod *args="":
