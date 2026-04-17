@@ -236,7 +236,8 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
     }
 
     let paragraph = Paragraph::new(display_lines)
-        .block(Block::default().borders(Borders::NONE));
+        .block(Block::default().borders(Borders::NONE))
+        .style(Style::default().bg(Color::Black));
     f.render_widget(paragraph, area);
 }
 
