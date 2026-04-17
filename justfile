@@ -58,3 +58,24 @@ test *args="":
 build-frontend:
 	cd frontend && yarn webpack --mode production
 
+# build the TUI binary (debug)
+build-tui:
+	cargo build --bin tailspin-tui
+
+# build the TUI binary (release)
+build-tui-release:
+	cargo build --release --bin tailspin-tui
+
+# run the TUI log viewer
+tui *args="":
+	cargo run --bin tailspin-tui -- {{ args }}
+
+# run the TUI log viewer (release)
+tui-release *args="":
+	cargo run --release --bin tailspin-tui -- {{ args }}
+
+# build release TUI and copy to bin/
+install-tui:
+	cargo build --release --bin tailspin-tui
+	cp target/release/tailspin-tui bin/tailspin-tui
+
