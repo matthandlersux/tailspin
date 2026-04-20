@@ -1,5 +1,3 @@
 /target
-node_modules
+/bin/tailspin
 *.log
-
-frontend/dist

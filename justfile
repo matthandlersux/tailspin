@@ -1,81 +1,20 @@
 usage:
 	just --list
 
-# run this first to install dependencies
-setup:
-	just yarn
-	cargo build
-
 build:
 	cargo build
-	just build-frontend
 
 build-release:
 	cargo build --release
-	just build-frontend
 
-# run the backend with dev frontend
+# run the tui against one or more log files
 run *args="":
-	#!/usr/bin/env bash
-
-	set -eux
-
-	just backend {{ args }} &
-	BACKEND_PID=$!
-
-	trap "kill $BACKEND_PID 2>/dev/null; wait $BACKEND_PID 2>/dev/null" INT TERM EXIT
-
-	just frontend || true
-
-	wait $BACKEND_PID
-
-# open the published website for viewing
-open-prod *args="":
-	xdg-open "http://tailspin-logview.s3-website-us-west-2.amazonaws.com/"
-
-# run the backend
-backend *args="":
 	cargo run -- {{ args }}
 
-# run the frontend
-frontend:
-	cd frontend && yarn webpack serve --mode development --open
+run-release *args="":
+	cargo run --release -- {{ args }}
 
-storybook:
-	cd frontend && yarn webpack serve --mode development --open-target "http://localhost:9090/storybook"
-
-# typecheck the frontend
-typecheck-ts:
-	cd frontend && yarn tsc --watch
-
-# yarn in the frontend
-yarn *args="":
-	cd frontend && yarn {{ args }}
-
-test *args="":
-	just yarn jest {{ args }}
-
-build-frontend:
-	cd frontend && yarn webpack --mode production
-
-# build the TUI binary (debug)
-build-tui:
-	cargo build --bin tailspin-tui
-
-# build the TUI binary (release)
-build-tui-release:
-	cargo build --release --bin tailspin-tui
-
-# run the TUI log viewer
-tui *args="":
-	cargo run --bin tailspin-tui -- {{ args }}
-
-# run the TUI log viewer (release)
-tui-release *args="":
-	cargo run --release --bin tailspin-tui -- {{ args }}
-
-# build release TUI and copy to bin/
-install-tui:
-	cargo build --release --bin tailspin-tui
-	cp target/release/tailspin-tui bin/tailspin-tui
-
+# build release and copy into ./bin
+install:
+	cargo build --release
+	cp target/release/tailspin bin/tailspin
