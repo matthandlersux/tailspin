@@ -9,16 +9,20 @@ expansion, regex search, multi-file tabs, and follow mode.
 ## Quickstart
 
 Tailspin is in beta and not yet distributed through a package manager. Build
-from source and run out of a local `bin/` folder inside the repo:
+from source with cargo:
 
 ```
 git clone git@github.com:matthandlersux/tailspin.git
 cd tailspin
-just local-install
-./bin/tailspin path/to/logfile1.log path/to/logfile2.log
+cargo install --path .
+tailspin path/to/logfile1.log path/to/logfile2.log
 ```
 
-Add `$THIS_FOLDER/bin` to your `PATH` to invoke `tailspin` from anywhere.
+This installs the `tailspin` binary into `~/.cargo/bin` — make sure that's on
+your `PATH`.
+
+Alternatively, `just local-install` builds a release binary into `./bin/tailspin`
+inside the repo if you'd rather not install system-wide.
 
 ## Features
 
@@ -60,5 +64,6 @@ just build            # debug build
 just build-release    # release build
 just run path/to/log  # run from source (debug)
 just run-release path/to/log
+just install          # cargo install --path . (into ~/.cargo/bin)
 just local-install    # release build + copy to ./bin/tailspin
 ```

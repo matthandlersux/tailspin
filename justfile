@@ -14,7 +14,11 @@ run *args="":
 run-release *args="":
 	cargo run --release -- {{ args }}
 
-# build release and copy into ./bin (local-only; not a system install)
+# install tailspin into ~/.cargo/bin (must be on PATH)
+install:
+	cargo install --path .
+
+# build release and copy into ./bin (alternative to `just install`)
 local-install:
 	cargo build --release
 	mkdir -p bin
