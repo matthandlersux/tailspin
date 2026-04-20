@@ -8,14 +8,17 @@ expansion, regex search, multi-file tabs, and follow mode.
 
 ## Quickstart
 
+Tailspin is in beta and not yet distributed through a package manager. Build
+from source and run out of a local `bin/` folder inside the repo:
+
 ```
 git clone git@github.com:matthandlersux/tailspin.git
 cd tailspin
-just install
+just local-install
 ./bin/tailspin path/to/logfile1.log path/to/logfile2.log
 ```
 
-Add `$THIS_FOLDER/bin` to your `PATH` and invoke `tailspin` from anywhere.
+Add `$THIS_FOLDER/bin` to your `PATH` to invoke `tailspin` from anywhere.
 
 ## Features
 
@@ -57,5 +60,5 @@ just build            # debug build
 just build-release    # release build
 just run path/to/log  # run from source (debug)
 just run-release path/to/log
-just install          # release build + copy to bin/tailspin
+just local-install    # release build + copy to ./bin/tailspin
 ```
