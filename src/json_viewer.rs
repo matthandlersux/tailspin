@@ -171,38 +171,16 @@ fn numeric_level(n: &serde_json::Number) -> String {
     }
 }
 
-pub fn format_json_lines(raw: &str, indent_prefix: &str) -> Vec<Line<'static>> {
+pub fn format_json_lines(raw: &str, indent_prefix: &str, max_width: usize) -> Vec<Line<'static>> {
     let parsed: serde_json::Value = match serde_json::from_str(raw) {
         Ok(v) => v,
         Err(_) => return vec![Line::from(raw.to_string())],
     };
 
     let mut lines = Vec::new();
-    let prefix = indent_prefix.to_string();
 
     if let serde_json::Value::Object(map) = &parsed {
-        let mut keys: Vec<&String> = map.keys().collect();
-        keys.sort_by_key(|k| {
-            let lower = k.to_lowercase();
-            let pos = PRIORITY_FIELDS.iter().position(|&f| f == lower);
-            (pos.is_none(), pos.unwrap_or(usize::MAX), k.to_string())
-        });
-
-        for (i, key) in keys.iter().enumerate() {
-            let value = &map[*key];
-            let is_last = i == keys.len() - 1;
-            let mut spans = vec![Span::raw(prefix.clone())];
-            spans.push(Span::styled(
-                format!("{}", key),
-                Style::default().fg(Color::Cyan),
-            ));
-            spans.push(Span::styled(": ", Style::default().fg(Color::DarkGray)));
-            append_value_spans(&mut spans, key, value);
-            if !is_last {
-                spans.push(Span::styled(",", Style::default().fg(Color::DarkGray)));
-            }
-            lines.push(Line::from(spans));
-        }
+        append_object_lines(&mut lines, map, indent_prefix, 0, max_width);
     } else {
         render_value_lines(&mut lines, &parsed, 0);
     }
@@ -210,11 +188,200 @@ pub fn format_json_lines(raw: &str, indent_prefix: &str) -> Vec<Line<'static>> {
     lines
 }
 
-pub fn json_line_count(raw: &str) -> usize {
+pub fn json_line_count(raw: &str, base_len: usize, max_width: usize) -> usize {
     match serde_json::from_str::<serde_json::Value>(raw) {
-        Ok(serde_json::Value::Object(map)) => map.len() + 2,
+        Ok(serde_json::Value::Object(map)) => count_object_lines(&map, base_len, 0, max_width) + 2,
         Ok(_) => 3,
         Err(_) => 1,
+    }
+}
+
+fn sorted_keys(map: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+    let mut keys: Vec<String> = map.keys().cloned().collect();
+    keys.sort_by_key(|k| {
+        let lower = k.to_lowercase();
+        let pos = PRIORITY_FIELDS.iter().position(|&f| f == lower);
+        (pos.is_none(), pos.unwrap_or(usize::MAX), k.clone())
+    });
+    keys
+}
+
+fn should_expand_value(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Object(m) => !m.is_empty(),
+        serde_json::Value::Array(a) => a.iter().any(|v| matches!(
+            v,
+            serde_json::Value::Object(_) | serde_json::Value::Array(_)
+        )),
+        _ => false,
+    }
+}
+
+fn count_object_lines(
+    map: &serde_json::Map<String, serde_json::Value>,
+    base_len: usize,
+    depth: usize,
+    max_width: usize,
+) -> usize {
+    let mut n = 0;
+    for (k, value) in map {
+        let start_col = base_len + 2 * depth + k.chars().count() + 2;
+        n += count_value_lines(value, base_len, depth, start_col, max_width);
+    }
+    n
+}
+
+fn count_value_lines(
+    value: &serde_json::Value,
+    base_len: usize,
+    depth: usize,
+    start_col: usize,
+    max_width: usize,
+) -> usize {
+    match value {
+        serde_json::Value::Object(m) if !m.is_empty() => {
+            1 + count_object_lines(m, base_len, depth + 1, max_width) + 1
+        }
+        serde_json::Value::Array(arr) if should_expand_array(value, start_col, max_width) => {
+            let mut n = 2;
+            let child_depth = depth + 1;
+            let child_col = base_len + 2 * child_depth;
+            for v in arr {
+                n += count_value_lines(v, base_len, child_depth, child_col, max_width);
+            }
+            n
+        }
+        _ => 1,
+    }
+}
+
+fn inline_value_width(value: &serde_json::Value) -> usize {
+    match value {
+        serde_json::Value::String(s) => s.chars().count() + 2,
+        serde_json::Value::Number(n) => n.to_string().chars().count(),
+        serde_json::Value::Bool(b) => if *b { 4 } else { 5 },
+        serde_json::Value::Null => 4,
+        serde_json::Value::Array(arr) => inline_array_width(arr),
+        serde_json::Value::Object(_) => value.to_string().chars().count(),
+    }
+}
+
+fn inline_array_width(arr: &[serde_json::Value]) -> usize {
+    let mut w = 2;
+    for (i, v) in arr.iter().enumerate() {
+        if i > 0 {
+            w += 2;
+        }
+        w += inline_value_width(v);
+    }
+    w
+}
+
+fn should_expand_array(value: &serde_json::Value, start_col: usize, max_width: usize) -> bool {
+    match value {
+        serde_json::Value::Array(arr) if !arr.is_empty() => {
+            if should_expand_value(value) {
+                return true;
+            }
+            if max_width == 0 {
+                return false;
+            }
+            start_col.saturating_add(inline_array_width(arr)) > max_width
+        }
+        _ => false,
+    }
+}
+
+fn append_object_lines(
+    lines: &mut Vec<Line<'static>>,
+    map: &serde_json::Map<String, serde_json::Value>,
+    base_prefix: &str,
+    depth: usize,
+    max_width: usize,
+) {
+    let keys = sorted_keys(map);
+    let indent = format!("{}{}", base_prefix, "  ".repeat(depth));
+    for (i, key) in keys.iter().enumerate() {
+        let value = &map[key];
+        let is_last = i == keys.len() - 1;
+        append_field_lines(lines, Some(key.as_str()), value, &indent, base_prefix, depth, is_last, max_width);
+    }
+}
+
+fn append_field_lines(
+    lines: &mut Vec<Line<'static>>,
+    key: Option<&str>,
+    value: &serde_json::Value,
+    indent: &str,
+    base_prefix: &str,
+    depth: usize,
+    is_last: bool,
+    max_width: usize,
+) {
+    let key_lower = key.map(|k| k.to_lowercase()).unwrap_or_default();
+
+    match value {
+        serde_json::Value::Object(nested) if !nested.is_empty() => {
+            let mut spans = vec![Span::raw(indent.to_string())];
+            if let Some(k) = key {
+                spans.push(Span::styled(k.to_string(), Style::default().fg(Color::Cyan)));
+                spans.push(Span::styled(": ", Style::default().fg(Color::DarkGray)));
+            }
+            spans.push(Span::styled("{", Style::default().fg(Color::Yellow)));
+            lines.push(Line::from(spans));
+
+            append_object_lines(lines, nested, base_prefix, depth + 1, max_width);
+
+            let close_indent = format!("{}{}", base_prefix, "  ".repeat(depth));
+            let mut close_spans = vec![
+                Span::raw(close_indent),
+                Span::styled("}", Style::default().fg(Color::Yellow)),
+            ];
+            if !is_last {
+                close_spans.push(Span::styled(",", Style::default().fg(Color::DarkGray)));
+            }
+            lines.push(Line::from(close_spans));
+        }
+        serde_json::Value::Array(arr) if {
+            let start_col = indent.chars().count() + key.map_or(0, |k| k.chars().count() + 2);
+            should_expand_array(value, start_col, max_width)
+        } => {
+            let mut spans = vec![Span::raw(indent.to_string())];
+            if let Some(k) = key {
+                spans.push(Span::styled(k.to_string(), Style::default().fg(Color::Cyan)));
+                spans.push(Span::styled(": ", Style::default().fg(Color::DarkGray)));
+            }
+            spans.push(Span::styled("[", Style::default().fg(Color::Yellow)));
+            lines.push(Line::from(spans));
+
+            let child_indent = format!("{}{}", base_prefix, "  ".repeat(depth + 1));
+            for (i, v) in arr.iter().enumerate() {
+                let last = i == arr.len() - 1;
+                append_field_lines(lines, None, v, &child_indent, base_prefix, depth + 1, last, max_width);
+            }
+
+            let close_indent = format!("{}{}", base_prefix, "  ".repeat(depth));
+            let mut close_spans = vec![
+                Span::raw(close_indent),
+                Span::styled("]", Style::default().fg(Color::Yellow)),
+            ];
+            if !is_last {
+                close_spans.push(Span::styled(",", Style::default().fg(Color::DarkGray)));
+            }
+            lines.push(Line::from(close_spans));
+        }
+        _ => {
+            let mut spans = vec![Span::raw(indent.to_string())];
+            if let Some(k) = key {
+                spans.push(Span::styled(k.to_string(), Style::default().fg(Color::Cyan)));
+                spans.push(Span::styled(": ", Style::default().fg(Color::DarkGray)));
+            }
+            append_value_spans(&mut spans, &key_lower, value);
+            if !is_last {
+                spans.push(Span::styled(",", Style::default().fg(Color::DarkGray)));
+            }
+            lines.push(Line::from(spans));
+        }
     }
 }
 

@@ -48,11 +48,11 @@ async fn main() -> io::Result<()> {
     let mut app = App::new(files);
 
     loop {
-        terminal.draw(|f| ui::render(f, &mut app))?;
-
         while let Ok(entry) = rx.try_recv() {
             app.add_entry(entry);
         }
+
+        terminal.draw(|f| ui::render(f, &mut app))?;
 
         if event::poll(Duration::from_millis(50))? {
             match event::read()? {

@@ -30,7 +30,45 @@ pub fn level_style(level: &str) -> Style {
         .add_modifier(Modifier::BOLD)
 }
 
-pub fn highlight_line<'a>(text: &'a str, search_re: Option<&Regex>) -> Line<'a> {
+pub fn strip_ansi(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != '\x1b' {
+            out.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some('[') => {
+                while let Some(nc) = chars.next() {
+                    if ('@'..='~').contains(&nc) {
+                        break;
+                    }
+                }
+            }
+            Some(']') => {
+                while let Some(nc) = chars.next() {
+                    if nc == '\x07' {
+                        break;
+                    }
+                    if nc == '\x1b' {
+                        if let Some(&'\\') = chars.peek() {
+                            chars.next();
+                            break;
+                        }
+                    }
+                }
+            }
+            Some('(') | Some(')') => {
+                chars.next();
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+pub fn highlight_line(text: &str, search_re: Option<&Regex>) -> Line<'static> {
     let mut segments: Vec<(usize, usize, SegmentKind)> = Vec::new();
 
     for m in LOG_LEVEL_RE.find_iter(text) {
@@ -81,12 +119,12 @@ fn overlaps(segments: &[(usize, usize, SegmentKind)], start: usize, end: usize) 
         .any(|&(s, e, _)| start < e && end > s)
 }
 
-fn build_spans<'a>(text: &'a str, segments: &[(usize, usize, SegmentKind)]) -> Line<'a> {
+fn build_spans(text: &str, segments: &[(usize, usize, SegmentKind)]) -> Line<'static> {
     if segments.is_empty() {
-        return Line::from(text);
+        return Line::from(text.to_string());
     }
 
-    let mut spans: Vec<Span<'a>> = Vec::new();
+    let mut spans: Vec<Span<'static>> = Vec::new();
     let mut pos = 0;
 
     let mut sorted: Vec<(usize, usize, SegmentKind)> = Vec::new();
@@ -132,9 +170,9 @@ fn build_spans<'a>(text: &'a str, segments: &[(usize, usize, SegmentKind)]) -> L
     Line::from(spans)
 }
 
-fn push_with_search_highlights<'a>(
-    spans: &mut Vec<Span<'a>>,
-    text: &'a str,
+fn push_with_search_highlights(
+    spans: &mut Vec<Span<'static>>,
+    text: &str,
     text_start: usize,
     search_segments: &[(usize, usize)],
     base_style: Style,
@@ -147,7 +185,7 @@ fn push_with_search_highlights<'a>(
         .collect();
 
     if relevant.is_empty() {
-        spans.push(Span::styled(text, base_style));
+        spans.push(Span::styled(text.to_string(), base_style));
         return;
     }
 
@@ -155,12 +193,12 @@ fn push_with_search_highlights<'a>(
     let mut pos = 0;
     for (s, e) in relevant {
         if s > pos {
-            spans.push(Span::styled(&text[pos..s], base_style));
+            spans.push(Span::styled(text[pos..s].to_string(), base_style));
         }
-        spans.push(Span::styled(&text[s..e], search_style));
+        spans.push(Span::styled(text[s..e].to_string(), search_style));
         pos = e;
     }
     if pos < text.len() {
-        spans.push(Span::styled(&text[pos..], base_style));
+        spans.push(Span::styled(text[pos..].to_string(), base_style));
     }
 }

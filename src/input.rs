@@ -46,6 +46,7 @@ fn handle_file_picker_key(app: &mut App, key: KeyEvent) -> bool {
                     app.current_tab = file_idx + 1;
                     app.cursor = 0;
                     app.scroll_offset = 0;
+                    app.run_search();
                     if app.follow {
                         app.scroll_to_bottom();
                     }
@@ -159,6 +160,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             app.current_tab = (app.current_tab + 1) % total_tabs;
             app.cursor = 0;
             app.scroll_offset = 0;
+            app.run_search();
             if app.follow {
                 app.cursor = app.visible_count().saturating_sub(1);
                 app.scroll_to_bottom();
@@ -173,6 +175,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             }
             app.cursor = 0;
             app.scroll_offset = 0;
+            app.run_search();
             if app.follow {
                 app.cursor = app.visible_count().saturating_sub(1);
                 app.scroll_to_bottom();
@@ -183,6 +186,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             app.current_tab = 0;
             app.cursor = 0;
             app.scroll_offset = 0;
+            app.run_search();
             if app.follow {
                 app.cursor = app.visible_count().saturating_sub(1);
                 app.scroll_to_bottom();
@@ -195,6 +199,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
                 app.current_tab = idx;
                 app.cursor = 0;
                 app.scroll_offset = 0;
+                app.run_search();
                 if app.follow {
                     app.cursor = app.visible_count().saturating_sub(1);
                     app.scroll_to_bottom();
@@ -206,7 +211,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             if let Some(line_idx) = app.cursor_line_index() {
                 if let Some(entry) = app.all_lines.get(line_idx) {
                     if entry.is_json {
-                        let h = crate::json_viewer::json_line_count(&entry.line);
+                        let h = crate::json_viewer::json_line_count(&entry.line, app.json_indent_len(), app.viewport_width);
                         app.expanded_heights.insert(line_idx, h);
                         let was_expanded = app.is_expanded(line_idx);
                         app.toggle_expand(line_idx);
@@ -222,6 +227,10 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             app.show_help = !app.show_help;
         }
 
+        KeyCode::Char('a') => {
+            app.strip_ansi = !app.strip_ansi;
+        }
+
         KeyCode::Char('*') => {
             app.yank_line_to_search();
         }
@@ -229,9 +238,11 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
         KeyCode::Char('e') => {
             app.expand_all_json = !app.expand_all_json;
             if app.expand_all_json {
+                let base_len = app.json_indent_len();
+                let w = app.viewport_width;
                 for (i, entry) in app.all_lines.iter().enumerate() {
                     if entry.is_json {
-                        let h = crate::json_viewer::json_line_count(&entry.line);
+                        let h = crate::json_viewer::json_line_count(&entry.line, base_len, w);
                         app.expanded_heights.insert(i, h);
                     }
                 }
@@ -288,7 +299,7 @@ pub fn handle_mouse(app: &mut App, mouse: MouseEvent) {
                         if mouse.column < 2 {
                             if let Some(entry) = app.all_lines.get(idx) {
                                 if entry.is_json {
-                                    let line_h = crate::json_viewer::json_line_count(&entry.line);
+                                    let line_h = crate::json_viewer::json_line_count(&entry.line, app.json_indent_len(), app.viewport_width);
                                     app.expanded_heights.insert(idx, line_h);
                                     app.toggle_expand(idx);
                                 }

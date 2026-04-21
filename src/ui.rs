@@ -22,6 +22,7 @@ pub fn render(f: &mut Frame, app: &mut App) {
         .split(f.area());
 
     app.viewport_height = chunks[1].height as usize;
+    app.viewport_width = chunks[1].width as usize;
     app.tick = app.tick.wrapping_add(1);
 
     render_status_bar(f, app, chunks[0]);
@@ -87,6 +88,21 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(p, area);
 }
 
+fn pad_line_bg<'a>(line: Line<'a>, width: usize, bg: Color) -> Line<'a> {
+    if matches!(bg, Color::Reset) {
+        return line.style(Style::default().bg(bg));
+    }
+    let text_w: usize = line.spans.iter().map(|s| s.width()).sum();
+    let mut spans = line.spans;
+    if text_w < width {
+        spans.push(Span::styled(
+            " ".repeat(width - text_w),
+            Style::default().bg(bg),
+        ));
+    }
+    Line::from(spans).style(Style::default().bg(bg))
+}
+
 fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(Clear, area);
 
@@ -97,6 +113,7 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
     };
 
     let viewport_height = area.height as usize;
+    let viewport_width = area.width as usize;
     let mut display_lines: Vec<Line> = Vec::new();
     let show_file_prefix = app.current_tab == 0;
 
@@ -147,7 +164,7 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
         };
 
         if app.is_expanded(line_idx) && entry.is_json {
-            let json_lines = json_viewer::format_json_lines(&entry.line, indent_prefix);
+            let json_lines = json_viewer::format_json_lines(&entry.line, indent_prefix, app.viewport_width);
 
             let header_row = display_row;
             if header_row >= app.scroll_offset && header_row < app.scroll_offset + viewport_height {
@@ -169,7 +186,7 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     spans.push(Span::raw("    "));
                 }
                 spans.push(Span::styled("{", Style::default().fg(Color::Yellow)));
-                display_lines.push(Line::from(spans).style(Style::default().bg(row_bg)));
+                display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
 
             let field_count = json_lines.len();
@@ -181,7 +198,7 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 if row >= app.scroll_offset + viewport_height {
                     break;
                 }
-                display_lines.push(json_line.style(Style::default().bg(row_bg)));
+                display_lines.push(pad_line_bg(json_line, viewport_width, row_bg));
             }
 
             let closing_row = header_row + 1 + field_count;
@@ -193,7 +210,7 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     spans.push(Span::raw("      "));
                 }
                 spans.push(Span::styled("}", Style::default().fg(Color::Yellow)));
-                display_lines.push(Line::from(spans).style(Style::default().bg(row_bg)));
+                display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
         } else {
             if display_row >= app.scroll_offset {
@@ -220,11 +237,18 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     let abridged = json_viewer::abridged_json_spans(&entry.line);
                     spans.extend(abridged);
                 } else {
-                    let highlighted = highlight::highlight_line(&entry.line, search_re.as_ref());
+                    let text_owned;
+                    let text: &str = if app.strip_ansi && entry.line.contains('\x1b') {
+                        text_owned = highlight::strip_ansi(&entry.line);
+                        &text_owned
+                    } else {
+                        &entry.line
+                    };
+                    let highlighted = highlight::highlight_line(text, search_re.as_ref());
                     spans.extend(highlighted.spans);
                 }
 
-                display_lines.push(Line::from(spans).style(Style::default().bg(row_bg)));
+                display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
         }
 
@@ -281,14 +305,16 @@ fn render_file_picker(f: &mut Frame, app: &App) {
     let x = (area.width.saturating_sub(width)) / 2;
     let y = (area.height.saturating_sub(height)) / 2;
 
+    let popup_bg = Color::Rgb(20, 20, 30);
     let popup_area = Rect::new(x, y, width, height);
     f.render_widget(Clear, popup_area);
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Cyan))
+        .border_style(Style::default().fg(Color::Cyan).bg(popup_bg))
+        .style(Style::default().bg(popup_bg))
         .title(" Switch File (@) ")
-        .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+        .title_style(Style::default().fg(Color::Cyan).bg(popup_bg).add_modifier(Modifier::BOLD));
 
     let inner = block.inner(popup_area);
     f.render_widget(block, popup_area);
@@ -298,13 +324,16 @@ fn render_file_picker(f: &mut Frame, app: &App) {
     }
 
     let search_line = Line::from(vec![
-        Span::styled("> ", Style::default().fg(Color::Cyan)),
-        Span::styled(&picker.query, Style::default().fg(Color::White)),
-        Span::styled("█", Style::default().fg(Color::Cyan)),
+        Span::styled("> ", Style::default().fg(Color::Cyan).bg(popup_bg)),
+        Span::styled(picker.query.clone(), Style::default().fg(Color::White).bg(popup_bg)),
+        Span::styled("█", Style::default().fg(Color::Cyan).bg(popup_bg)),
     ]);
 
     let search_area = Rect::new(inner.x, inner.y, inner.width, 1);
-    f.render_widget(Paragraph::new(search_line), search_area);
+    f.render_widget(
+        Paragraph::new(search_line).style(Style::default().bg(popup_bg)),
+        search_area,
+    );
 
     let list_area = Rect::new(inner.x, inner.y + 1, inner.width, inner.height.saturating_sub(1));
 
@@ -317,7 +346,7 @@ fn render_file_picker(f: &mut Frame, app: &App) {
         let color = tabs::file_color(file.color_index);
         let is_selected = i == picker.selected;
 
-        let bg = if is_selected { Color::Rgb(40, 40, 60) } else { Color::Reset };
+        let bg = if is_selected { Color::Rgb(40, 40, 60) } else { popup_bg };
         let prefix = if is_selected { "▸ " } else { "  " };
 
         let spans = vec![
@@ -332,23 +361,26 @@ fn render_file_picker(f: &mut Frame, app: &App) {
                 Style::default().fg(Color::DarkGray).bg(bg),
             ),
         ];
-        lines.push(Line::from(spans));
+        lines.push(pad_line_bg(Line::from(spans), list_area.width as usize, bg));
     }
 
     if lines.is_empty() {
         lines.push(Line::from(Span::styled(
             "  No matches",
-            Style::default().fg(Color::DarkGray),
+            Style::default().fg(Color::DarkGray).bg(popup_bg),
         )));
     }
 
-    f.render_widget(Paragraph::new(lines), list_area);
+    f.render_widget(
+        Paragraph::new(lines).style(Style::default().bg(popup_bg)),
+        list_area,
+    );
 }
 
 fn render_help(f: &mut Frame) {
     let area = f.area();
     let width = 52u16.min(area.width.saturating_sub(4));
-    let height = 24u16.min(area.height.saturating_sub(4));
+    let height = 28u16.min(area.height.saturating_sub(4));
     let x = (area.width.saturating_sub(width)) / 2;
     let y = (area.height.saturating_sub(height)) / 2;
 
@@ -385,6 +417,9 @@ fn render_help(f: &mut Frame) {
         Line::from(Span::styled("  JSON", header_style)),
         help_line("  Enter", "Toggle JSON expand on cursor", key_style, desc_style),
         help_line("  e", "Expand/collapse all JSON", key_style, desc_style),
+        Line::from(""),
+        Line::from(Span::styled("  Display", header_style)),
+        help_line("  a", "Toggle ANSI-code stripping", key_style, desc_style),
         Line::from(""),
         Line::from(Span::styled("  Files", header_style)),
         help_line("  Tab / S-Tab", "Cycle file tabs", key_style, desc_style),

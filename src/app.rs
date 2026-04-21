@@ -106,12 +106,14 @@ pub struct App {
     pub expand_all_json: bool,
 
     pub viewport_height: usize,
+    pub viewport_width: usize,
     pub expanded_heights: HashMap<usize, usize>,
 
     pub cursor: usize,
     pub file_picker: Option<FilePickerState>,
     pub show_help: bool,
     pub tick: usize,
+    pub strip_ansi: bool,
 }
 
 impl App {
@@ -150,11 +152,13 @@ impl App {
             expanded_lines: HashMap::new(),
             expand_all_json: false,
             viewport_height: 24,
+            viewport_width: 80,
             expanded_heights: HashMap::new(),
             cursor: 0,
             file_picker: None,
             show_help: false,
             tick: 0,
+            strip_ansi: true,
         }
     }
 
@@ -170,9 +174,12 @@ impl App {
         self.all_lines.push(entry);
 
         if !self.search_query.is_empty() {
-            if let Ok(re) = regex::Regex::new(&format!("(?i){}", &self.search_query)) {
-                if re.is_match(&self.all_lines[idx].line) {
-                    self.search_results.push(idx);
+            let tab_visible = self.current_tab == 0 || self.current_tab - 1 == file_idx;
+            if tab_visible {
+                if let Ok(re) = regex::Regex::new(&format!("(?i){}", &self.search_query)) {
+                    if re.is_match(&self.all_lines[idx].line) {
+                        self.search_results.push(idx);
+                    }
                 }
             }
         }
@@ -181,6 +188,10 @@ impl App {
             self.cursor = self.visible_count().saturating_sub(1);
             self.scroll_to_bottom();
         }
+    }
+
+    pub fn json_indent_len(&self) -> usize {
+        if self.current_tab == 0 { 17 } else { 6 }
     }
 
     pub fn visible_count(&self) -> usize {
@@ -353,10 +364,15 @@ impl App {
         if self.search_query.is_empty() {
             return;
         }
-        if let Ok(re) = regex::Regex::new(&format!("(?i){}", &self.search_query)) {
-            for (i, entry) in self.all_lines.iter().enumerate() {
-                if re.is_match(&entry.line) {
-                    self.search_results.push(i);
+        let re = match regex::Regex::new(&format!("(?i){}", &self.search_query)) {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+        let count = self.visible_count();
+        for i in 0..count {
+            if let Some(idx) = self.get_line_index(i) {
+                if re.is_match(&self.all_lines[idx].line) {
+                    self.search_results.push(idx);
                 }
             }
         }
@@ -437,7 +453,8 @@ pub async fn tail_file(path: String, file_index: usize, tx: mpsc::Sender<LogEntr
                 match line {
                     Ok(Some(text)) => {
                         line_number += 1;
-                        let trimmed = text.trim_start();
+                        let stripped = crate::highlight::strip_ansi(&text);
+                        let trimmed = stripped.trim_start();
                         let is_json = trimmed.starts_with('{');
                         let entry = LogEntry {
                             line: text,
