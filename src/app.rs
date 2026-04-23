@@ -118,6 +118,7 @@ pub struct App {
 
     pub trace_filter: Option<String>,
     pub trace_indices: Vec<usize>,
+    pub trace_prev_tab: usize,
 }
 
 impl App {
@@ -165,6 +166,7 @@ impl App {
             strip_ansi: true,
             trace_filter: None,
             trace_indices: Vec::new(),
+            trace_prev_tab: 0,
         }
     }
 
@@ -209,7 +211,11 @@ impl App {
     }
 
     pub fn json_indent_len(&self) -> usize {
-        if self.current_tab == 0 || self.trace_filter.is_some() { 19 } else { 8 }
+        4
+    }
+
+    pub fn plain_indent_len(&self) -> usize {
+        if self.current_tab == 0 || self.trace_filter.is_some() { 17 } else { 8 }
     }
 
     pub fn visible_count(&self) -> usize {
@@ -364,6 +370,14 @@ impl App {
         }
     }
 
+    pub fn toggle_trace_mode(&mut self) {
+        if self.trace_filter.is_some() {
+            self.exit_trace_mode();
+        } else {
+            self.enter_trace_mode();
+        }
+    }
+
     pub fn enter_trace_mode(&mut self) {
         let idx = match self.cursor_line_index() {
             Some(i) => i,
@@ -373,6 +387,7 @@ impl App {
             Some(t) => t,
             None => return,
         };
+        self.trace_prev_tab = self.current_tab;
         self.trace_filter = Some(tid.clone());
         self.trace_indices = self
             .all_lines
@@ -399,6 +414,8 @@ impl App {
     pub fn exit_trace_mode(&mut self) {
         self.trace_filter = None;
         self.trace_indices.clear();
+        let total_tabs = self.files.len() + 1;
+        self.current_tab = self.trace_prev_tab.min(total_tabs.saturating_sub(1));
         self.cursor = 0;
         self.scroll_offset = 0;
         self.run_search();

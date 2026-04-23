@@ -126,7 +126,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
         }
 
         KeyCode::Char('l') => {
-            app.enter_trace_mode();
+            app.toggle_trace_mode();
         }
 
         KeyCode::Char('n') => app.next_match(),
@@ -147,7 +147,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             }
         }
 
-        KeyCode::Tab => {
+        KeyCode::Tab if app.trace_filter.is_none() => {
             let total_tabs = app.files.len() + 1;
             app.current_tab = (app.current_tab + 1) % total_tabs;
             app.cursor = 0;
@@ -158,7 +158,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
                 app.scroll_to_bottom();
             }
         }
-        KeyCode::BackTab => {
+        KeyCode::BackTab if app.trace_filter.is_none() => {
             let total_tabs = app.files.len() + 1;
             if app.current_tab == 0 {
                 app.current_tab = total_tabs - 1;
@@ -174,7 +174,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             }
         }
 
-        KeyCode::Char('0') | KeyCode::Char('`') => {
+        KeyCode::Char('0') | KeyCode::Char('`') if app.trace_filter.is_none() => {
             app.current_tab = 0;
             app.cursor = 0;
             app.scroll_offset = 0;
@@ -185,7 +185,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
             }
         }
 
-        KeyCode::Char(c) if c.is_ascii_digit() && c != '0' => {
+        KeyCode::Char(c) if c.is_ascii_digit() && c != '0' && app.trace_filter.is_none() => {
             let idx = (c as u8 - b'0') as usize;
             if idx <= app.files.len() {
                 app.current_tab = idx;
@@ -213,7 +213,7 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
                     } else {
                         line_text
                     };
-                    let indent = app.json_indent_len();
+                    let indent = app.plain_indent_len();
                     let avail = app.viewport_width.saturating_sub(indent).max(1);
                     let chars = text.chars().count();
                     ((chars + avail - 1) / avail).max(1)

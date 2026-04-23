@@ -138,10 +138,13 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
     let cursor_bg = Color::Rgb(55, 55, 90);
 
     let indent_prefix = if show_file_prefix {
-        "                   "
+        "                 "
     } else {
         "        "
     };
+
+    let json_child_indent = "    ";
+    let json_bracket_indent = "  ";
 
     let trace_color = Color::Rgb(197, 134, 192);
 
@@ -227,7 +230,6 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                         spans.push(Span::raw("  "));
                     }
                     if show_file_prefix {
-                        spans.push(Span::styled("● ", Style::default().fg(file_color)));
                         spans.push(Span::styled(
                             format!("{:<10} ", file_name),
                             Style::default().fg(file_color),
@@ -243,7 +245,9 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
         } else if app.is_expanded(line_idx) && entry.is_json {
-            let json_lines = json_viewer::format_json_lines(&entry.line, indent_prefix, app.viewport_width);
+            let json_lines = json_viewer::format_json_lines(&entry.line, json_child_indent, app.viewport_width);
+
+            let bracket_indent = json_bracket_indent;
 
             let header_row = display_row;
             if header_row >= app.scroll_offset && header_row < app.scroll_offset + viewport_height {
@@ -261,21 +265,26 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     spans.push(Span::raw("  "));
                 }
                 if show_file_prefix {
-                    spans.push(Span::styled("● ", Style::default().fg(file_color)));
                     spans.push(Span::styled(
                         format!("{:<10} ", file_name),
                         Style::default().fg(file_color),
                     ));
-                } else {
-                    spans.push(Span::raw("    "));
                 }
-                spans.push(Span::styled("{", Style::default().fg(Color::Yellow)));
+                display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
+            }
+
+            let open_row = header_row + 1;
+            if open_row >= app.scroll_offset && open_row < app.scroll_offset + viewport_height {
+                let spans = vec![
+                    Span::raw(bracket_indent.to_string()),
+                    Span::styled("{", Style::default().fg(Color::Yellow)),
+                ];
                 display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
 
             let field_count = json_lines.len();
             for (j, json_line) in json_lines.into_iter().enumerate() {
-                let row = header_row + 1 + j;
+                let row = open_row + 1 + j;
                 if row < app.scroll_offset {
                     continue;
                 }
@@ -290,15 +299,12 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 display_lines.push(pad_line_bg(hl, viewport_width, row_bg));
             }
 
-            let closing_row = header_row + 1 + field_count;
+            let closing_row = open_row + 1 + field_count;
             if closing_row >= app.scroll_offset && closing_row < app.scroll_offset + viewport_height {
-                let mut spans = Vec::new();
-                if show_file_prefix {
-                    spans.push(Span::raw("                 "));
-                } else {
-                    spans.push(Span::raw("        "));
-                }
-                spans.push(Span::styled("}", Style::default().fg(Color::Yellow)));
+                let spans = vec![
+                    Span::raw(bracket_indent.to_string()),
+                    Span::styled("}", Style::default().fg(Color::Yellow)),
+                ];
                 display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
             }
         } else {
@@ -321,7 +327,6 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 }
 
                 if show_file_prefix {
-                    spans.push(Span::styled("● ", Style::default().fg(file_color)));
                     spans.push(Span::styled(
                         format!("{:<10} ", file_name),
                         Style::default().fg(file_color),
@@ -514,8 +519,8 @@ fn render_help(f: &mut Frame) {
         help_line("  Esc", "Clear search", key_style, desc_style),
         Line::from(""),
         Line::from(Span::styled("  Trace", header_style)),
-        help_line("  l", "Filter to cursor row's trace id", key_style, desc_style),
-        help_line("  Esc", "Exit trace mode", key_style, desc_style),
+        help_line("  l", "Toggle trace filter on cursor row", key_style, desc_style),
+        help_line("  Esc", "Exit trace mode (restores prior view)", key_style, desc_style),
         Line::from(""),
         Line::from(Span::styled("  JSON", header_style)),
         help_line("  Enter", "Toggle JSON expand on cursor", key_style, desc_style),

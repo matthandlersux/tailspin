@@ -190,7 +190,7 @@ pub fn format_json_lines(raw: &str, indent_prefix: &str, max_width: usize) -> Ve
 
 pub fn json_line_count(raw: &str, base_len: usize, max_width: usize) -> usize {
     match serde_json::from_str::<serde_json::Value>(raw) {
-        Ok(serde_json::Value::Object(map)) => count_object_lines(&map, base_len, 0, max_width) + 2,
+        Ok(serde_json::Value::Object(map)) => count_object_lines(&map, base_len, 0, max_width) + 3,
         Ok(_) => 3,
         Err(_) => 1,
     }

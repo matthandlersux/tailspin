@@ -33,6 +33,15 @@ pub fn file_color(index: usize) -> Color {
 pub fn render_tab_line(app: &App) -> Line<'static> {
     let mut spans = Vec::new();
 
+    if app.trace_filter.is_some() {
+        let trace_color = Color::Rgb(197, 134, 192);
+        spans.push(Span::styled(
+            format!(" Trace matches({}) ", app.trace_indices.len()),
+            Style::default().fg(Color::Black).bg(trace_color),
+        ));
+        return Line::from(spans);
+    }
+
     let combined_style = if app.current_tab == 0 {
         Style::default().fg(Color::Black).bg(Color::White)
     } else {
