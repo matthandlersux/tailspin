@@ -163,7 +163,63 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
             Color::Reset
         };
 
-        if app.is_expanded(line_idx) && entry.is_json {
+        if app.is_expanded(line_idx) && !entry.is_json {
+            let raw = &entry.line;
+            let text: String = if app.strip_ansi && raw.contains('\x1b') {
+                highlight::strip_ansi(raw)
+            } else {
+                raw.clone()
+            };
+            let indent_len = indent_prefix.chars().count();
+            let avail = viewport_width.saturating_sub(indent_len).max(1);
+
+            let mut chunks: Vec<String> = Vec::new();
+            let mut iter = text.chars();
+            loop {
+                let chunk: String = iter.by_ref().take(avail).collect();
+                if chunk.is_empty() {
+                    break;
+                }
+                chunks.push(chunk);
+            }
+            if chunks.is_empty() {
+                chunks.push(String::new());
+            }
+
+            for (i, chunk) in chunks.iter().enumerate() {
+                let row = display_row + i;
+                if row < app.scroll_offset {
+                    continue;
+                }
+                if row >= app.scroll_offset + viewport_height {
+                    break;
+                }
+
+                let mut spans: Vec<Span<'static>> = Vec::new();
+                if i == 0 {
+                    if is_cursor {
+                        spans.push(Span::styled("▌", Style::default().fg(Color::White)));
+                        spans.push(Span::raw(" "));
+                    } else {
+                        spans.push(Span::raw("  "));
+                    }
+                    if show_file_prefix {
+                        spans.push(Span::styled("● ", Style::default().fg(file_color)));
+                        spans.push(Span::styled(
+                            format!("{:<10} ", file_name),
+                            Style::default().fg(file_color),
+                        ));
+                    }
+                } else {
+                    spans.push(Span::raw(indent_prefix.to_string()));
+                }
+
+                let hl = highlight::highlight_line(chunk, search_re.as_ref());
+                spans.extend(hl.spans);
+
+                display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
+            }
+        } else if app.is_expanded(line_idx) && entry.is_json {
             let json_lines = json_viewer::format_json_lines(&entry.line, indent_prefix, app.viewport_width);
 
             let header_row = display_row;
@@ -198,7 +254,12 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 if row >= app.scroll_offset + viewport_height {
                     break;
                 }
-                display_lines.push(pad_line_bg(json_line, viewport_width, row_bg));
+                let hl = if let Some(re) = &search_re {
+                    highlight::apply_search_highlight(json_line, re)
+                } else {
+                    json_line
+                };
+                display_lines.push(pad_line_bg(hl, viewport_width, row_bg));
             }
 
             let closing_row = header_row + 1 + field_count;
@@ -235,6 +296,11 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
 
                 if entry.is_json {
                     let abridged = json_viewer::abridged_json_spans(&entry.line);
+                    let abridged = if let Some(re) = &search_re {
+                        highlight::apply_search_highlight_spans(abridged, re)
+                    } else {
+                        abridged
+                    };
                     spans.extend(abridged);
                 } else {
                     let text_owned;

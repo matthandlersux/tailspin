@@ -1,8 +1,7 @@
 # Tailspin
 
-A lightweight, open-source tool designed to streamline local log file monitoring
-during development. Tail one or many log files in a terminal UI with JSON
-expansion, regex search, multi-file tabs, and follow mode.
+A lightweight terminal log viewer for local development. Tail one or many log
+files with JSON expansion, regex search, multi-file tabs, and follow mode.
 
 ![screenshot](./screenshot.png)
 
@@ -26,14 +25,15 @@ inside the repo if you'd rather not install system-wide.
 
 ## Features
 
-- Multi-file tailing with combined and per-file tab views
-- Abridged JSON view (level/time/msg) with click-to-expand and syntax coloring
-- Regex search with highlighting and match navigation
+- Multi-file tailing with per-file tabs and a combined view
+- Abridged JSON rows (level / time / msg) that expand to a pretty-printed tree
+- Regex search with highlighting across plain, abridged, and expanded content
+- Enter to expand JSON or wrap a long plain line onto multiple rows
 - Fuzzy file picker for fast tab switching
-- Mouse support: click to select, scroll to move cursor, click the left arrow to toggle JSON
+- ANSI escape codes stripped by default to prevent display glitches (toggle with `a`)
+- Log-level color coding and syntax highlighting for timestamps, dates, and quoted strings
 - Auto-scroll follow mode
-- Log level color coding (INFO, WARN, ERROR, DEBUG, TRACE)
-- Syntax highlighting for timestamps, quoted strings, and dates
+- Mouse support: click to select, scroll to move cursor, click the gutter arrow to toggle expand
 
 ## Keybindings
 
@@ -43,10 +43,11 @@ inside the repo if you'd rather not install system-wide.
 | `n` / `p` | next / previous match |
 | `*` | yank current line into search |
 | `j` / `k` or arrows | move cursor |
-| `PageUp` / `PageDown` | page up/down |
+| `PageUp` / `PageDown` | page up / down |
 | `g` / `G` or `Home` / `End` | jump to top / bottom |
-| `Enter` | toggle JSON expand on current line |
+| `Enter` | expand JSON, or wrap a plain line (toggle) |
 | `e` | expand / collapse all JSON |
+| `a` | toggle ANSI-code stripping |
 | `f` | toggle follow mode |
 | `Tab` / `Shift-Tab` | next / previous tab |
 | `` ` `` or `0` | combined view |
@@ -57,7 +58,7 @@ inside the repo if you'd rather not install system-wide.
 
 ## Building
 
-Requires Rust (cargo). Helpful commands are in the [justfile](https://github.com/casey/just):
+Requires Rust (cargo). Common commands are in the [justfile](https://github.com/casey/just):
 
 ```
 just build            # debug build

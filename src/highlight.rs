@@ -30,6 +30,55 @@ pub fn level_style(level: &str) -> Style {
         .add_modifier(Modifier::BOLD)
 }
 
+pub fn apply_search_highlight(line: Line<'static>, re: &Regex) -> Line<'static> {
+    let line_style = line.style;
+    let search_style = Style::default()
+        .fg(Color::Black)
+        .bg(Color::Yellow)
+        .add_modifier(Modifier::BOLD);
+    let mut out: Vec<Span<'static>> = Vec::new();
+    for span in line.spans {
+        let content = span.content.into_owned();
+        let style = span.style;
+        let mut pos = 0;
+        for m in re.find_iter(&content) {
+            if m.start() > pos {
+                out.push(Span::styled(content[pos..m.start()].to_string(), style));
+            }
+            out.push(Span::styled(content[m.start()..m.end()].to_string(), search_style));
+            pos = m.end();
+        }
+        if pos < content.len() {
+            out.push(Span::styled(content[pos..].to_string(), style));
+        }
+    }
+    Line::from(out).style(line_style)
+}
+
+pub fn apply_search_highlight_spans(spans: Vec<Span<'static>>, re: &Regex) -> Vec<Span<'static>> {
+    let search_style = Style::default()
+        .fg(Color::Black)
+        .bg(Color::Yellow)
+        .add_modifier(Modifier::BOLD);
+    let mut out: Vec<Span<'static>> = Vec::new();
+    for span in spans {
+        let content = span.content.into_owned();
+        let style = span.style;
+        let mut pos = 0;
+        for m in re.find_iter(&content) {
+            if m.start() > pos {
+                out.push(Span::styled(content[pos..m.start()].to_string(), style));
+            }
+            out.push(Span::styled(content[m.start()..m.end()].to_string(), search_style));
+            pos = m.end();
+        }
+        if pos < content.len() {
+            out.push(Span::styled(content[pos..].to_string(), style));
+        }
+    }
+    out
+}
+
 pub fn strip_ansi(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut chars = s.chars().peekable();

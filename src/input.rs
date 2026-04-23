@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent, MouseButton, MouseEvent, MouseEventKind};
 
 use crate::app::{App, FilePickerState, InputMode};
 
@@ -114,27 +114,19 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
         return false;
     }
 
-    if key.modifiers.contains(KeyModifiers::CONTROL) {
-        match key.code {
-            KeyCode::Char('t') => {
-                open_file_picker(app);
-                return false;
-            }
-            _ => {}
-        }
-    }
-
     match key.code {
-        KeyCode::Char('q') => return true,
-
         KeyCode::Char('/') => {
             app.input_mode = InputMode::Search;
             app.search_query.clear();
             app.search_results.clear();
         }
 
-        KeyCode::Char('@') => {
+        KeyCode::Char('@') | KeyCode::Char('t') => {
             open_file_picker(app);
+        }
+
+        KeyCode::Char('l') => {
+            app.enter_trace_mode();
         }
 
         KeyCode::Char('n') => app.next_match(),
@@ -209,16 +201,28 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
 
         KeyCode::Enter => {
             if let Some(line_idx) = app.cursor_line_index() {
-                if let Some(entry) = app.all_lines.get(line_idx) {
-                    if entry.is_json {
-                        let h = crate::json_viewer::json_line_count(&entry.line, app.json_indent_len(), app.viewport_width);
-                        app.expanded_heights.insert(line_idx, h);
-                        let was_expanded = app.is_expanded(line_idx);
-                        app.toggle_expand(line_idx);
-                        if !was_expanded {
-                            app.ensure_expanded_visible();
-                        }
-                    }
+                let (is_json, line_text) = match app.all_lines.get(line_idx) {
+                    Some(entry) => (entry.is_json, entry.line.clone()),
+                    None => return false,
+                };
+                let h = if is_json {
+                    crate::json_viewer::json_line_count(&line_text, app.json_indent_len(), app.viewport_width)
+                } else {
+                    let text = if app.strip_ansi && line_text.contains('\x1b') {
+                        crate::highlight::strip_ansi(&line_text)
+                    } else {
+                        line_text
+                    };
+                    let indent = app.json_indent_len();
+                    let avail = app.viewport_width.saturating_sub(indent).max(1);
+                    let chars = text.chars().count();
+                    ((chars + avail - 1) / avail).max(1)
+                };
+                app.expanded_heights.insert(line_idx, h);
+                let was_expanded = app.is_expanded(line_idx);
+                app.toggle_expand(line_idx);
+                if !was_expanded {
+                    app.ensure_expanded_visible();
                 }
             }
         }
@@ -229,10 +233,6 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
 
         KeyCode::Char('a') => {
             app.strip_ansi = !app.strip_ansi;
-        }
-
-        KeyCode::Char('*') => {
-            app.yank_line_to_search();
         }
 
         KeyCode::Char('e') => {
@@ -253,7 +253,9 @@ fn handle_normal_key(app: &mut App, key: KeyEvent) -> bool {
         }
 
         KeyCode::Esc => {
-            if !app.search_query.is_empty() {
+            if app.trace_filter.is_some() {
+                app.exit_trace_mode();
+            } else if !app.search_query.is_empty() {
                 app.search_query.clear();
                 app.search_results.clear();
             }
