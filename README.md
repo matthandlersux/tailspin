@@ -27,6 +27,7 @@ inside the repo if you'd rather not install system-wide.
 
 - Multi-file tailing with per-file tabs and a combined view
 - Abridged JSON rows (level / time / msg) that expand to a pretty-printed tree
+- Trace-id correlation: rows with a `traceId` / `trace_id` key are marked in the gutter; press `l` to filter to all rows sharing that trace across every file
 - Regex search with highlighting across plain, abridged, and expanded content
 - Enter to expand JSON or wrap a long plain line onto multiple rows
 - Fuzzy file picker for fast tab switching
@@ -41,7 +42,7 @@ inside the repo if you'd rather not install system-wide.
 | --- | --- |
 | `/` | start search |
 | `n` / `p` | next / previous match |
-| `*` | yank current line into search |
+| `l` | filter to all rows sharing the cursor row's trace id (Esc to exit) |
 | `j` / `k` or arrows | move cursor |
 | `PageUp` / `PageDown` | page up / down |
 | `g` / `G` or `Home` / `End` | jump to top / bottom |
@@ -52,9 +53,9 @@ inside the repo if you'd rather not install system-wide.
 | `Tab` / `Shift-Tab` | next / previous tab |
 | `` ` `` or `0` | combined view |
 | `1`..`9` | jump to tab N |
-| `@` or `Ctrl+T` | fuzzy file picker |
+| `@` or `t` | fuzzy file picker |
 | `?` | help overlay |
-| `q` or `Ctrl+C` | quit |
+| `Ctrl+C` | quit |
 
 ## Building
 

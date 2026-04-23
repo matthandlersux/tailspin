@@ -9,7 +9,7 @@ const MSG_FIELDS: &[&str] = &["msg", "message", "text", "body"];
 fn level_color(level: &str) -> Color {
     match level.to_lowercase().as_str() {
         "trace" => Color::DarkGray,
-        "debug" => Color::Cyan,
+        "debug" => Color::DarkGray,
         "info" => Color::LightBlue,
         "warn" | "warning" => Color::Yellow,
         "error" | "err" => Color::Red,

@@ -11,6 +11,7 @@ pub struct LogEntry {
     pub file_path: String,
     pub file_index: usize,
     pub is_json: bool,
+    pub trace_id: Option<String>,
 }
 
 pub struct FileState {
@@ -114,6 +115,9 @@ pub struct App {
     pub show_help: bool,
     pub tick: usize,
     pub strip_ansi: bool,
+
+    pub trace_filter: Option<String>,
+    pub trace_indices: Vec<usize>,
 }
 
 impl App {
@@ -159,6 +163,8 @@ impl App {
             show_help: false,
             tick: 0,
             strip_ansi: true,
+            trace_filter: None,
+            trace_indices: Vec::new(),
         }
     }
 
@@ -173,9 +179,21 @@ impl App {
         self.file_lines.entry(file_idx).or_default().push(idx);
         self.all_lines.push(entry);
 
+        if let Some(ref tf) = self.trace_filter {
+            if let Some(tid) = &self.all_lines[idx].trace_id {
+                if tid == tf {
+                    self.trace_indices.push(idx);
+                }
+            }
+        }
+
         if !self.search_query.is_empty() {
-            let tab_visible = self.current_tab == 0 || self.current_tab - 1 == file_idx;
-            if tab_visible {
+            let include = if self.trace_filter.is_some() {
+                self.all_lines[idx].trace_id.as_deref() == self.trace_filter.as_deref()
+            } else {
+                self.current_tab == 0 || self.current_tab - 1 == file_idx
+            };
+            if include {
                 if let Ok(re) = regex::Regex::new(&format!("(?i){}", &self.search_query)) {
                     if re.is_match(&self.all_lines[idx].line) {
                         self.search_results.push(idx);
@@ -191,16 +209,15 @@ impl App {
     }
 
     pub fn json_indent_len(&self) -> usize {
-        if self.current_tab == 0 { 17 } else { 6 }
+        if self.current_tab == 0 || self.trace_filter.is_some() { 19 } else { 8 }
     }
 
     pub fn visible_count(&self) -> usize {
+        if self.trace_filter.is_some() {
+            return self.trace_indices.len();
+        }
         if self.current_tab == 0 {
-            if self.search_results.is_empty() || self.search_query.is_empty() {
-                self.all_lines.len()
-            } else {
-                self.all_lines.len()
-            }
+            self.all_lines.len()
         } else {
             self.file_lines
                 .get(&(self.current_tab - 1))
@@ -209,6 +226,9 @@ impl App {
     }
 
     pub fn get_line_index(&self, visible_idx: usize) -> Option<usize> {
+        if self.trace_filter.is_some() {
+            return self.trace_indices.get(visible_idx).copied();
+        }
         if self.current_tab == 0 {
             if visible_idx < self.all_lines.len() {
                 Some(visible_idx)
@@ -344,17 +364,47 @@ impl App {
         }
     }
 
-    pub fn yank_line_to_search(&mut self) {
-        if let Some(idx) = self.cursor_line_index() {
-            let line = self.all_lines[idx].line.clone();
-            let escaped = regex::escape(&line);
-            let trimmed = escaped.trim();
-            if trimmed.len() > 200 {
-                self.search_query = trimmed[..200].to_string();
-            } else {
-                self.search_query = trimmed.to_string();
-            }
-            self.run_search();
+    pub fn enter_trace_mode(&mut self) {
+        let idx = match self.cursor_line_index() {
+            Some(i) => i,
+            None => return,
+        };
+        let tid = match self.all_lines.get(idx).and_then(|e| e.trace_id.clone()) {
+            Some(t) => t,
+            None => return,
+        };
+        self.trace_filter = Some(tid.clone());
+        self.trace_indices = self
+            .all_lines
+            .iter()
+            .enumerate()
+            .filter_map(|(i, e)| {
+                if e.trace_id.as_deref() == Some(tid.as_str()) {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        self.current_tab = 0;
+        self.cursor = 0;
+        self.scroll_offset = 0;
+        self.run_search();
+        if self.follow {
+            self.cursor = self.visible_count().saturating_sub(1);
+            self.scroll_to_bottom();
+        }
+    }
+
+    pub fn exit_trace_mode(&mut self) {
+        self.trace_filter = None;
+        self.trace_indices.clear();
+        self.cursor = 0;
+        self.scroll_offset = 0;
+        self.run_search();
+        if self.follow {
+            self.cursor = self.visible_count().saturating_sub(1);
+            self.scroll_to_bottom();
         }
     }
 
@@ -440,6 +490,22 @@ fn find_common_prefix(paths: &[String]) -> String {
     }
 }
 
+fn extract_trace_id(raw: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(raw).ok()?;
+    let map = value.as_object()?;
+    for (k, v) in map {
+        let kl = k.to_lowercase();
+        if kl == "traceid" || kl == "trace_id" {
+            match v {
+                serde_json::Value::String(s) if !s.is_empty() => return Some(s.clone()),
+                serde_json::Value::Number(n) => return Some(n.to_string()),
+                _ => {}
+            }
+        }
+    }
+    None
+}
+
 pub async fn tail_file(path: String, file_index: usize, tx: mpsc::Sender<LogEntry>) -> io::Result<()> {
     let file = File::open(&path).await?;
     let reader = BufReader::new(file);
@@ -456,12 +522,14 @@ pub async fn tail_file(path: String, file_index: usize, tx: mpsc::Sender<LogEntr
                         let stripped = crate::highlight::strip_ansi(&text);
                         let trimmed = stripped.trim_start();
                         let is_json = trimmed.starts_with('{');
+                        let trace_id = if is_json { extract_trace_id(trimmed) } else { None };
                         let entry = LogEntry {
                             line: text,
                             line_number,
                             file_path: path.clone(),
                             file_index,
                             is_json,
+                            trace_id,
                         };
                         if tx.send(entry).await.is_err() {
                             break;

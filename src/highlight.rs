@@ -14,7 +14,7 @@ static DATE_RE: LazyLock<Regex> =
 pub fn level_color(level: &str) -> Color {
     match level.to_uppercase().as_str() {
         "TRACE" => Color::DarkGray,
-        "DEBUG" => Color::Cyan,
+        "DEBUG" => Color::DarkGray,
         "INFO" => Color::LightBlue,
         "WARN" => Color::Yellow,
         "ERROR" => Color::Red,

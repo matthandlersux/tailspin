@@ -75,6 +75,22 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
     let json_color = if app.expand_all_json { Color::Yellow } else { Color::DarkGray };
     spans.push(Span::styled(json_label, Style::default().fg(json_color)));
 
+    if let Some(tid) = &app.trace_filter {
+        let trace_color = Color::Rgb(197, 134, 192);
+        let short: String = tid.chars().take(20).collect();
+        let ellipsis = if tid.chars().count() > 20 { "…" } else { "" };
+        spans.push(Span::styled(" │ ", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(
+            " TRACE ",
+            Style::default().fg(Color::Black).bg(trace_color).add_modifier(Modifier::BOLD),
+        ));
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(
+            format!("{}{}", short, ellipsis),
+            Style::default().fg(trace_color).add_modifier(Modifier::BOLD),
+        ));
+    }
+
     if !app.search_results.is_empty() {
         spans.push(Span::styled(" │ ", Style::default().fg(Color::DarkGray)));
         spans.push(Span::styled(
@@ -122,10 +138,12 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
     let cursor_bg = Color::Rgb(55, 55, 90);
 
     let indent_prefix = if show_file_prefix {
-        "                 "
+        "                   "
     } else {
-        "      "
+        "        "
     };
+
+    let trace_color = Color::Rgb(197, 134, 192);
 
     for i in 0..count {
         let line_idx = match app.get_line_index(i) {
@@ -203,6 +221,11 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     } else {
                         spans.push(Span::raw("  "));
                     }
+                    if entry.trace_id.is_some() {
+                        spans.push(Span::styled("◈ ", Style::default().fg(trace_color)));
+                    } else {
+                        spans.push(Span::raw("  "));
+                    }
                     if show_file_prefix {
                         spans.push(Span::styled("● ", Style::default().fg(file_color)));
                         spans.push(Span::styled(
@@ -232,6 +255,11 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                 }
                 spans.push(Span::styled("▼", Style::default().fg(Color::Yellow)));
                 spans.push(Span::raw(" "));
+                if entry.trace_id.is_some() {
+                    spans.push(Span::styled("◈ ", Style::default().fg(trace_color)));
+                } else {
+                    spans.push(Span::raw("  "));
+                }
                 if show_file_prefix {
                     spans.push(Span::styled("● ", Style::default().fg(file_color)));
                     spans.push(Span::styled(
@@ -266,9 +294,9 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
             if closing_row >= app.scroll_offset && closing_row < app.scroll_offset + viewport_height {
                 let mut spans = Vec::new();
                 if show_file_prefix {
-                    spans.push(Span::raw("               "));
+                    spans.push(Span::raw("                 "));
                 } else {
-                    spans.push(Span::raw("      "));
+                    spans.push(Span::raw("        "));
                 }
                 spans.push(Span::styled("}", Style::default().fg(Color::Yellow)));
                 display_lines.push(pad_line_bg(Line::from(spans), viewport_width, row_bg));
@@ -282,6 +310,12 @@ fn render_log_view(f: &mut Frame, app: &App, area: Rect) {
                     spans.push(Span::raw(" "));
                 } else if entry.is_json {
                     spans.push(Span::styled("▶ ", Style::default().fg(Color::DarkGray)));
+                } else {
+                    spans.push(Span::raw("  "));
+                }
+
+                if entry.trace_id.is_some() {
+                    spans.push(Span::styled("◈ ", Style::default().fg(trace_color)));
                 } else {
                     spans.push(Span::raw("  "));
                 }
@@ -350,7 +384,7 @@ fn render_bottom_bar(f: &mut Frame, app: &App, area: Rect) {
             f.render_widget(p, area);
         }
         InputMode::Normal | InputMode::FilePicker => {
-            let help = " ?:help  /:search  f:follow  e:expand-json  Tab:switch  @:files ";
+            let help = " ?:help  /:search  f:follow  e:expand-json  Tab:switch  t:files  l:trace ";
             let p = Paragraph::new(help)
                 .style(Style::default().fg(Color::DarkGray).bg(Color::Rgb(20, 20, 20)));
             f.render_widget(p, area);
@@ -477,8 +511,11 @@ fn render_help(f: &mut Frame) {
         Line::from(Span::styled("  Search", header_style)),
         help_line("  /", "Start regex search", key_style, desc_style),
         help_line("  n / p", "Next / previous match", key_style, desc_style),
-        help_line("  *", "Search current line", key_style, desc_style),
         help_line("  Esc", "Clear search", key_style, desc_style),
+        Line::from(""),
+        Line::from(Span::styled("  Trace", header_style)),
+        help_line("  l", "Filter to cursor row's trace id", key_style, desc_style),
+        help_line("  Esc", "Exit trace mode", key_style, desc_style),
         Line::from(""),
         Line::from(Span::styled("  JSON", header_style)),
         help_line("  Enter", "Toggle JSON expand on cursor", key_style, desc_style),
@@ -491,9 +528,9 @@ fn render_help(f: &mut Frame) {
         help_line("  Tab / S-Tab", "Cycle file tabs", key_style, desc_style),
         help_line("  0 / `", "Combined view (all files)", key_style, desc_style),
         help_line("  1-9", "Jump to file tab", key_style, desc_style),
-        help_line("  @ / Ctrl+T", "Fuzzy file picker", key_style, desc_style),
+        help_line("  @ / t", "Fuzzy file picker", key_style, desc_style),
         Line::from(""),
-        help_line("  q / Ctrl+C", "Quit", key_style, desc_style),
+        help_line("  Ctrl+C", "Quit", key_style, desc_style),
     ];
 
     f.render_widget(Paragraph::new(lines), inner);
